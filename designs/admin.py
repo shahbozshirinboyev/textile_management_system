@@ -9,6 +9,11 @@ from types import MethodType
 from .models import Color, StoneSize, ScotchRoll, Design, DesignColor
 
 
+DESIGN_LIST_PREVIEW_WIDTH = 100
+DESIGN_FORM_PREVIEW_WIDTH = 420
+DESIGN_FORM_PREVIEW_HEIGHT = 'auto'
+
+
 MODEL_ADMIN_ORDER = {
     'designs': ['Design', 'Color', 'StoneSize', 'ScotchRoll'],
 }
@@ -157,29 +162,47 @@ class DesignColorInline(FormattedNumberAdminMixin, admin.TabularInline):
 
 @admin.register(Design)
 class DesignAdmin(FormattedNumberAdminMixin, admin.ModelAdmin):
-    list_display = ['name', 'image_thumbnail', 'skotch', 'skotch_length_display', 'colors_count', 'total_stones', 'updated_at', 'created_at']
+    list_display = ['name', 'image_list_preview', 'skotch', 'skotch_length_display', 'colors_count', 'total_stones', 'updated_at', 'created_at']
     inlines = [DesignColorInline]
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'image', 'image_thumbnail')
+            'fields': ('name', 'image', 'image_form_preview')
         }),
         ('Scotch Roll Information', {
             'fields': ('skotch', 'skotch_length')
         }),
     )
-    readonly_fields = ['image_thumbnail', 'colors_count', 'total_stones', 'total_stone_cost', 'total_skotch_cost']
+    readonly_fields = ['image_form_preview', 'colors_count', 'total_stones', 'total_stone_cost', 'total_skotch_cost']
 
     class Media:
         js = ('designs/js/image_preview.js', 'designs/js/number_format.js')
 
-    def image_thumbnail(self, obj):
+    def image_list_preview(self, obj):
         if obj.image:
             return format_html(
-                '<span id="image-preview"><img src="{}" width="100" height="100" /></span>',
-                obj.image.url
+                '<span class="design-list-preview"><img src="{}" width="{}" height="auto" /></span>',
+                obj.image.url,
+                DESIGN_LIST_PREVIEW_WIDTH,
             )
-        return format_html('<span id="image-preview">No image</span>')
-    image_thumbnail.short_description = 'Preview'
+        return format_html('<span class="design-list-preview">No image</span>')
+    image_list_preview.short_description = 'Preview'
+
+    def image_form_preview(self, obj):
+        attrs = format_html(
+            'id="image-preview" data-preview-width="{}" data-preview-height="{}"',
+            DESIGN_FORM_PREVIEW_WIDTH,
+            DESIGN_FORM_PREVIEW_HEIGHT,
+        )
+        if obj and obj.image:
+            return format_html(
+                '<span {}><img src="{}" style="max-width: {}px; max-height: {}px; width: auto; height: auto;" /></span>',
+                attrs,
+                obj.image.url,
+                DESIGN_FORM_PREVIEW_WIDTH,
+                DESIGN_FORM_PREVIEW_HEIGHT,
+            )
+        return format_html('<span {}>No image</span>', attrs)
+    image_form_preview.short_description = 'Preview'
 
     def skotch_length_display(self, obj):
         return format_number(obj.skotch_length, 2)
