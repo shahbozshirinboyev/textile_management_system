@@ -16,6 +16,9 @@ DESIGN_FORM_PREVIEW_HEIGHT = 'auto'
 
 MODEL_ADMIN_ORDER = {
     'designs': ['Design', 'Color', 'StoneSize', 'ScotchRoll'],
+    'accounts': ['UserProfile', 'User', 'Group'],
+    'orders': ['Order', 'OrderStatus'],
+    'finance': ['Payment', 'PaymentStatus', 'Expense', 'ExpenseType', 'Statistics'],
 }
 
 
@@ -162,17 +165,18 @@ class DesignColorInline(FormattedNumberAdminMixin, admin.TabularInline):
 
 @admin.register(Design)
 class DesignAdmin(FormattedNumberAdminMixin, admin.ModelAdmin):
-    list_display = ['name', 'image_list_preview', 'skotch', 'skotch_length_display', 'colors_count', 'total_stones', 'updated_at', 'created_at']
+    list_display = ['name', 'image_list_preview', 'scotch', 'scotch_length_display', 'colors_count', 'total_stones', 'updated_at', 'created_at']
+    search_fields = ['name']
     inlines = [DesignColorInline]
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'image', 'image_form_preview')
         }),
         ('Scotch Roll Information', {
-            'fields': ('skotch', 'skotch_length')
+            'fields': ('scotch', 'scotch_length')
         }),
     )
-    readonly_fields = ['image_form_preview', 'colors_count', 'total_stones', 'total_stone_cost', 'total_skotch_cost']
+    readonly_fields = ['image_form_preview', 'colors_count', 'total_stones', 'total_stone_cost', 'total_scotch_cost']
 
     class Media:
         js = ('designs/js/image_preview.js', 'designs/js/number_format.js')
@@ -204,10 +208,10 @@ class DesignAdmin(FormattedNumberAdminMixin, admin.ModelAdmin):
         return format_html('<span {}>No image</span>', attrs)
     image_form_preview.short_description = 'Preview'
 
-    def skotch_length_display(self, obj):
-        return format_number(obj.skotch_length, 2)
-    skotch_length_display.short_description = 'Skotch length'
-    skotch_length_display.admin_order_field = 'skotch_length'
+    def scotch_length_display(self, obj):
+        return format_number(obj.scotch_length, 2)
+    scotch_length_display.short_description = 'Scotch length'
+    scotch_length_display.admin_order_field = 'scotch_length'
 
     def colors_count(self, obj):
         if not obj:
@@ -227,11 +231,11 @@ class DesignAdmin(FormattedNumberAdminMixin, admin.ModelAdmin):
         return format_number(obj.total_stone_cost(), 2)
     total_stone_cost.short_description = 'Total stone cost'
 
-    def total_skotch_cost(self, obj):
+    def total_scotch_cost(self, obj):
         if not obj:
             return format_number(0, 2)
-        return format_number(obj.total_skotch_cost(), 2)
-    total_skotch_cost.short_description = 'Total skotch cost'
+        return format_number(obj.total_scotch_cost(), 2)
+    total_scotch_cost.short_description = 'Total scotch cost'
 
 
 @admin.register(Color)

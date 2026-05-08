@@ -51,8 +51,8 @@ class Design(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     image = models.ImageField(upload_to='designs/', blank=True, null=True)
-    skotch = models.ForeignKey(ScotchRoll, on_delete=models.SET_NULL, null=True, blank=True, related_name='designs')
-    skotch_length = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    scotch = models.ForeignKey(ScotchRoll, on_delete=models.SET_NULL, null=True, blank=True, related_name='designs')
+    scotch_length = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -69,9 +69,9 @@ class Design(models.Model):
                 total += dc.stone_count * dc.stone_size.price
         return total
 
-    def total_skotch_cost(self):
-        if self.skotch and self.skotch_length:
-            return self.skotch_length * self.skotch.price_per_meter
+    def total_scotch_cost(self):
+        if self.scotch and self.scotch_length:
+            return self.scotch_length * self.scotch.price_per_meter
         return 0
 
     class Meta:

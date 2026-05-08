@@ -58,11 +58,11 @@ class Migration(migrations.Migration):
                 ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=255)),
                 ('image', models.ImageField(blank=True, null=True, upload_to='designs/')),
-                ('skotch_length', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
+                ('scotch_length', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
                 ('mold_price_auto', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('skotch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='designs', to='designs.scotchroll')),
+                ('scotch', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='designs', to='designs.scotchroll')),
             ],
             options={
                 'verbose_name': 'Design',
