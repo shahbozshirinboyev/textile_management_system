@@ -1,0 +1,36 @@
+{% extends 'accounts/base.html' %}
+{% block title %}Dizaynlar{% endblock %}
+{% block content %}
+<section class="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+    <div>
+        <p class="text-sm font-medium uppercase tracking-[.24em] text-teal-300">Katalog</p>
+        <h1 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Dizayn tanlang</h1>
+    </div>
+    <a href="{% url 'create_order' %}" class="inline-flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-600 dark:bg-teal-400 dark:text-zinc-950 dark:hover:bg-teal-300"><i data-lucide="plus" class="h-4 w-4"></i>Zakaz berish</a>
+</section>
+<section class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    {% for design in designs %}
+        <article class="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/[.06]">
+            <div class="aspect-[4/3] bg-zinc-100 dark:bg-zinc-900">
+                {% if design.image %}
+                    <img src="{{ design.image.url }}" alt="{{ design.name }}" class="h-full w-full object-cover">
+                {% else %}
+                    <div class="grid h-full place-items-center text-zinc-500">Rasm yo'q</div>
+                {% endif %}
+            </div>
+            <div class="p-5">
+                <h2 class="text-lg font-semibold">{{ design.name }}</h2>
+                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{{ design.total_stones }} ta tosh · {{ design.colors.count }} rang</p>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    {% for item in design.colors.all|slice:":5" %}
+                        <span class="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:text-zinc-300">{{ item.color.name }}</span>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'create_order_for_design' design.id %}" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-teal-500 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-600 dark:bg-teal-400 dark:text-zinc-950 dark:hover:bg-teal-300"><i data-lucide="shopping-bag" class="h-4 w-4"></i>Zakaz qilish</a>
+            </div>
+        </article>
+    {% empty %}
+        <p class="text-zinc-600 dark:text-zinc-400">Dizaynlar hali kiritilmagan.</p>
+    {% endfor %}
+</section>
+{% endblock %}
