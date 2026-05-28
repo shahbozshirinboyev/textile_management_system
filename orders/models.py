@@ -36,6 +36,7 @@ class Order(models.Model):
         related_name='employee_orders',
     )
     date = models.DateField()
+    quantity = models.PositiveIntegerField(default=1, help_text='Buyurtma qilingan dona soni')
     note = models.TextField(blank=True)
     status = models.ForeignKey(OrderStatus, on_delete=models.PROTECT, related_name='orders')
     cost_price = models.DecimalField(max_digits=14, decimal_places=2, default=0)
@@ -45,6 +46,14 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Order #{self.id} - {self.design}'
+
+    @property
+    def total_sale_price(self):
+        return self.sale_price * self.quantity
+
+    @property
+    def total_cost_price(self):
+        return self.cost_price * self.quantity
 
     class Meta:
         verbose_name = 'Order'

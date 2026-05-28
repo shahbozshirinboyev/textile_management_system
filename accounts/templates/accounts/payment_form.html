@@ -1,23 +1,89 @@
 {% extends 'accounts/base.html' %}
-{% block title %}To'lov yuborish{% endblock %}
+{% block title %}To'lov yuborish — Textile MS{% endblock %}
 {% block content %}
 <section class="mx-auto max-w-2xl">
-    <p class="text-sm font-medium uppercase tracking-[.24em] text-teal-300">To'lov</p>
-    <h1 class="mt-3 text-3xl font-semibold tracking-tight">To'lov cheki yuborish</h1>
-    <form method="post" enctype="multipart/form-data" class="mt-8 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/[.06]">
+
+    <nav class="mb-6 flex items-center gap-2 text-sm t-secondary">
+        <a href="{% url 'buyer_dashboard' %}" class="hover:underline">Kabinet</a>
+        <i data-lucide="chevron-right" class="h-3.5 w-3.5"></i>
+        <span class="font-medium t-primary">To'lov yuborish</span>
+    </nav>
+
+    <div class="mb-6">
+        <p class="text-xs font-semibold uppercase tracking-widest t-teal">To'lov</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight t-primary">To'lov cheki yuborish</h1>
+        <p class="mt-1 text-sm t-secondary">Zakaz tanlang va to'lov ma'lumotlarini kiriting</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="rounded-2xl border card p-6 shadow-sm space-y-5">
         {% csrf_token %}
-        <label class="block text-sm text-zinc-700 dark:text-zinc-300" for="order">Zakaz</label>
-        <select id="order" name="order" required class="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 outline-none ring-teal-400/40 focus:ring-4 dark:border-white/10 dark:bg-zinc-950/70">
-            <option value="">Tanlang</option>
-            {% for order in orders %}
-                <option value="{{ order.id }}" {% if selected_order.id == order.id %}selected{% endif %}>#{{ order.id }} · {{ order.design.name }}</option>
-            {% endfor %}
-        </select>
-        <label class="mt-5 block text-sm text-zinc-700 dark:text-zinc-300" for="amount">Summa</label>
-        <input id="amount" name="amount" type="number" step="0.01" min="0" required class="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 outline-none ring-teal-400/40 focus:ring-4 dark:border-white/10 dark:bg-zinc-950/70">
-        <label class="mt-5 block text-sm text-zinc-700 dark:text-zinc-300" for="receipt_image">Chek rasmi</label>
-        <input id="receipt_image" name="receipt_image" type="file" accept="image/*" class="mt-2 w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm outline-none ring-teal-400/40 file:mr-4 file:rounded-md file:border-0 file:bg-teal-500 file:px-3 file:py-2 file:font-semibold file:text-white focus:ring-4 dark:border-white/10 dark:bg-zinc-950/70 dark:file:bg-teal-400 dark:file:text-zinc-950">
-        <button class="mt-6 inline-flex items-center gap-2 rounded-lg bg-teal-500 px-5 py-3 font-semibold text-white hover:bg-teal-600 dark:bg-teal-400 dark:text-zinc-950 dark:hover:bg-teal-300"><i data-lucide="upload" class="h-4 w-4"></i>Yuborish</button>
+
+        <div>
+            <label class="block text-sm font-medium t-secondary mb-1.5" for="order">
+                Zakaz <span class="text-rose-500">*</span>
+            </label>
+            <select id="order" name="order" required class="field w-full rounded-xl border px-4 py-3 text-sm">
+                <option value="">— Tanlang —</option>
+                {% for o in orders %}
+                    <option value="{{ o.id }}" {% if selected_order.id == o.id %}selected{% endif %}>
+                        #{{ o.id }} · {{ o.design.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium t-secondary mb-1.5" for="amount">
+                Summa (so'm) <span class="text-rose-500">*</span>
+            </label>
+            <input id="amount" name="amount" type="number" step="0.01" min="0" required
+                   class="field w-full rounded-xl border px-4 py-3 text-sm" placeholder="0.00">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium t-secondary mb-1.5" for="receipt_image">
+                Chek rasmi <span class="t-muted font-normal">(ixtiyoriy)</span>
+            </label>
+            <input id="receipt_image" name="receipt_image" type="file" accept="image/*"
+                   class="field w-full rounded-xl border px-4 py-3 text-sm
+                          file:mr-4 file:rounded-lg file:border-0 file:bg-teal-500 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-teal-600">
+            <p class="mt-1.5 text-xs t-muted">JPG, PNG yoki PDF formatida</p>
+        </div>
+
+        <div id="preview-container" class="hidden">
+            <p class="text-sm font-medium t-secondary mb-2">Ko'rinish:</p>
+            <img id="preview-img" src="" alt="Chek ko'rinishi"
+                 class="max-h-48 rounded-xl border object-contain" style="border-color:#e4e4e7">
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-teal-600 transition-colors">
+                <i data-lucide="upload" class="h-4 w-4"></i>Yuborish
+            </button>
+            <a href="{% url 'buyer_dashboard' %}"
+               class="inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium t-secondary hover:bg-zinc-50 transition-colors" style="border-color:#e4e4e7">
+                Bekor qilish
+            </a>
+        </div>
     </form>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('receipt_image').addEventListener('change', function(e){
+        var file = e.target.files[0];
+        if(file && file.type.startsWith('image/')){
+            var reader = new FileReader();
+            reader.onload = function(ev){
+                document.getElementById('preview-img').src = ev.target.result;
+                document.getElementById('preview-container').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        } else {
+            document.getElementById('preview-container').classList.add('hidden');
+        }
+    });
+</script>
 {% endblock %}

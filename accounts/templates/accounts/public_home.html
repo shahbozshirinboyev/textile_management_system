@@ -1,38 +1,112 @@
 {% extends 'accounts/base.html' %}
-{% block title %}Dizaynlar{% endblock %}
+{% block title %}Dizayn katalogi — Textile MS{% endblock %}
 {% block content %}
-<section class="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-    <div>
-        <p class="text-sm font-medium uppercase tracking-[.24em] text-teal-300">Textile katalog</p>
-        <h1 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Dizayn tanlang va buyurtma bering</h1>
-        <p class="mt-3 max-w-2xl text-zinc-600 dark:text-zinc-400">Buyurtma berish bosilganda ro'yxatdan o'tish yoki mavjud accountga kirish oynasi ochiladi.</p>
+
+<!-- Hero -->
+<section class="mb-10 text-center">
+    <div class="inline-flex items-center gap-2 rounded-full border border-teal-500 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest t-teal mb-5 bg-teal-soft">
+        <i data-lucide="sparkles" class="h-3 w-3"></i>Textile katalog
     </div>
-    <a href="{% url 'login' %}" class="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-3 text-sm font-medium hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10"><i data-lucide="log-in" class="h-4 w-4"></i>Kirish</a>
+    <h1 class="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl t-primary">
+        Dizayn tanlang,<br>
+        <span class="t-teal">buyurtma bering</span>
+    </h1>
+    <p class="mx-auto mt-4 max-w-xl text-base t-secondary">
+        To'qimachilik dizaynlarini ko'ring va buyurtma bering.
+    </p>
+
+    {% if not user.is_authenticated %}
+    <div class="mt-6 flex items-center justify-center gap-3">
+        <a href="{% url 'signup' %}"
+           class="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-teal-600 transition-colors">
+            <i data-lucide="user-plus" class="h-4 w-4"></i>Ro'yxatdan o'tish
+        </a>
+        <a href="{% url 'login' %}"
+           class="inline-flex items-center gap-2 rounded-xl border card px-5 py-2.5 text-sm font-medium t-secondary shadow-sm hover:bg-zinc-50 transition-colors">
+            <i data-lucide="log-in" class="h-4 w-4"></i>Kirish
+        </a>
+    </div>
+    {% else %}
+    <div class="mt-6 flex items-center justify-center gap-3">
+        <a href="{% url 'dashboard' %}"
+           class="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-teal-600 transition-colors">
+            <i data-lucide="layout-dashboard" class="h-4 w-4"></i>Kabinetga o'tish
+        </a>
+    </div>
+    {% endif %}
 </section>
 
-<section class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-    {% for design in designs %}
-        <article class="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/[.06]">
-            <div class="aspect-[4/3] bg-zinc-100 dark:bg-zinc-900">
-                {% if design.image %}
-                    <img src="{{ design.image.url }}" alt="{{ design.name }}" class="h-full w-full object-cover">
-                {% else %}
-                    <div class="grid h-full place-items-center text-zinc-500">Rasm yo'q</div>
-                {% endif %}
-            </div>
-            <div class="p-5">
-                <h2 class="text-lg font-semibold">{{ design.name }}</h2>
-                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{{ design.total_stones }} ta tosh · {{ design.colors.count }} rang</p>
-                <div class="mt-4 flex flex-wrap gap-2">
-                    {% for item in design.colors.all|slice:":5" %}
-                        <span class="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-700 dark:border-white/10 dark:text-zinc-300">{{ item.color.name }}</span>
-                    {% endfor %}
+<!-- Designs grid -->
+<section>
+    <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-lg font-semibold t-primary">Barcha dizaynlar</h2>
+        <span class="qty-badge rounded-full px-3 py-1 text-xs font-medium">{{ designs|length }} ta</span>
+    </div>
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {% for design in designs %}
+            <article class="group overflow-hidden rounded-2xl border card shadow-sm hover:shadow-md transition-all duration-200">
+                <div class="relative aspect-video overflow-hidden img-placeholder">
+                    {% if design.image %}
+                        <img src="{{ design.image.url }}" alt="{{ design.name }}"
+                             class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    {% else %}
+                        <div class="grid h-full place-items-center">
+                            <div class="flex flex-col items-center gap-2 t-muted">
+                                <i data-lucide="image-off" class="h-8 w-8"></i>
+                                <span class="text-xs">Rasm yo'q</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                        <i data-lucide="gem" class="h-3 w-3"></i>{{ design.total_stones }} tosh
+                    </div>
                 </div>
-                <a href="{% url 'auth_choice' %}?next={% url 'create_order_for_design' design.id %}" class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-teal-500 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-600 dark:bg-teal-400 dark:text-zinc-950 dark:hover:bg-teal-300"><i data-lucide="shopping-bag" class="h-4 w-4"></i>Buyurtma berish</a>
+                <div class="p-5">
+                    <div class="flex items-start justify-between gap-2">
+                        <h3 class="text-base font-semibold t-primary">{{ design.name }}</h3>
+                        <a href="{% url 'design_detail' design.id %}" class="shrink-0 text-xs t-teal hover:underline">Batafsil →</a>
+                    </div>
+                    <p class="mt-1 text-sm t-secondary">{{ design.colors.count }} xil rang</p>
+                    {% if design.colors.all %}
+                        <div class="mt-3 flex flex-wrap gap-1.5">
+                            {% for item in design.colors.all|slice:":5" %}
+                                <span class="chip inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs t-secondary">
+                                    {% if item.color.label %}<img src="{{ item.color.label.url }}" alt="" class="h-3 w-6 rounded-sm object-cover">{% endif %}
+                                    {{ item.color.name }}
+                                </span>
+                            {% endfor %}
+                            {% if design.colors.count > 5 %}
+                                <span class="chip rounded-full px-2.5 py-0.5 text-xs t-muted">+{{ design.colors.count|add:"-5" }}</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% if user.is_authenticated and user.profile.role == 'buyer' %}
+                        <a href="{% url 'create_order_for_design' design.id %}"
+                           class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600 transition-colors">
+                            <i data-lucide="shopping-bag" class="h-4 w-4"></i>Zakaz qilish
+                        </a>
+                    {% elif not user.is_authenticated %}
+                        <a href="{% url 'auth_choice' %}?next={% url 'create_order_for_design' design.id %}"
+                           class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600 transition-colors">
+                            <i data-lucide="shopping-bag" class="h-4 w-4"></i>Buyurtma berish
+                        </a>
+                    {% else %}
+                        <a href="{% url 'design_detail' design.id %}"
+                           class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border card px-4 py-2.5 text-sm font-medium t-secondary hover:bg-zinc-50 transition-colors">
+                            <i data-lucide="eye" class="h-4 w-4"></i>Ko'rish
+                        </a>
+                    {% endif %}
+                </div>
+            </article>
+        {% empty %}
+            <div class="col-span-full flex flex-col items-center gap-4 py-16 text-center">
+                <span class="empty-icon grid h-16 w-16 place-items-center rounded-2xl">
+                    <i data-lucide="package-open" class="h-8 w-8 t-muted"></i>
+                </span>
+                <p class="t-secondary">Dizaynlar hali kiritilmagan.</p>
             </div>
-        </article>
-    {% empty %}
-        <p class="text-zinc-600 dark:text-zinc-400">Dizaynlar hali kiritilmagan.</p>
-    {% endfor %}
+        {% endfor %}
+    </div>
 </section>
 {% endblock %}

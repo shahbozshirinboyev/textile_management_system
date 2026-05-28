@@ -1,21 +1,16 @@
 {% extends 'accounts/base.html' %}
-{% block title %}Zakazlar — Textile MS{% endblock %}
+{% block title %}Zakazlar — Admin panel{% endblock %}
 {% block content %}
 
 <section class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
     <div>
-        <p class="text-xs font-semibold uppercase tracking-widest t-teal">Employee panel</p>
-        <h1 class="mt-2 text-3xl font-bold tracking-tight sm:text-4xl t-primary">Tushgan zakazlar</h1>
-        <p class="mt-1 text-sm t-secondary">Zakazlarni ko'ring va statusini yangilang</p>
+        <p class="text-xs font-semibold uppercase tracking-widest t-teal">Admin panel</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight t-primary">Zakazlar</h1>
     </div>
     <div class="flex gap-3">
         <div class="rounded-2xl border card px-5 py-3 shadow-sm text-center">
             <p class="text-xs t-secondary">Jami</p>
             <p class="mt-0.5 text-2xl font-bold t-primary">{{ total_orders }}</p>
-        </div>
-        <div class="rounded-2xl border card px-5 py-3 shadow-sm text-center">
-            <p class="text-xs t-secondary">Mening</p>
-            <p class="mt-0.5 text-2xl font-bold t-teal">{{ my_orders }}</p>
         </div>
         <div class="rounded-2xl border px-5 py-3 shadow-sm text-center" id="new-orders-card">
             <p class="text-xs" style="color:#d97706">Yangi</p>
@@ -24,14 +19,32 @@
     </div>
 </section>
 
+<!-- Search + filter -->
+<div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+    <form method="get" class="flex flex-1 items-center gap-2">
+        {% if active_status %}<input type="hidden" name="status" value="{{ active_status }}">{% endif %}
+        <div class="relative flex-1">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 t-muted">
+                <i data-lucide="search" class="h-4 w-4"></i>
+            </span>
+            <input name="q" value="{{ search }}" placeholder="Dizayn, xaridor yoki ID..."
+                   class="field w-full rounded-xl border pl-10 pr-4 py-2.5 text-sm">
+        </div>
+        <button type="submit" class="rounded-xl bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-600 transition-colors">
+            Qidirish
+        </button>
+    </form>
+</div>
+
+<!-- Status tabs -->
 <div class="mb-6 flex flex-wrap gap-2">
-    <a href="{% url 'employee_orders' %}"
+    <a href="{% url 'admin_orders' %}{% if search %}?q={{ search }}{% endif %}"
        class="rounded-xl px-4 py-2 text-sm font-medium transition-colors
               {% if not active_status %}bg-teal-500 text-white{% else %}tab-inactive border{% endif %}">
         Hammasi
     </a>
     {% for status in statuses %}
-        <a href="{% url 'employee_orders' %}?status={{ status.code }}"
+        <a href="{% url 'admin_orders' %}?status={{ status.code }}{% if search %}&q={{ search }}{% endif %}"
            class="rounded-xl px-4 py-2 text-sm font-medium transition-colors
                   {% if active_status == status.code %}bg-teal-500 text-white{% else %}tab-inactive border{% endif %}">
             {{ status.name }}
@@ -43,17 +56,18 @@
     {% endfor %}
 </div>
 
+<!-- Table -->
 <div class="overflow-hidden rounded-2xl border card shadow-sm">
     <div class="overflow-x-auto">
         <table class="min-w-full text-left text-sm">
             <thead>
                 <tr class="table-head border-b" style="border-color:#e4e4e7">
                     <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Zakaz</th>
-                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Buyer</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Xaridor</th>
                     <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Sana</th>
                     <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Miqdor</th>
                     <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Status</th>
-                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Xodim</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Narx</th>
                     <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Amal</th>
                 </tr>
             </thead>
@@ -61,13 +75,9 @@
                 {% for order in orders %}
                     <tr class="row-hover border-b last:border-0 transition-colors" style="border-color:#f4f4f5">
                         <td class="px-5 py-4">
-                            <div class="flex items-center gap-2">
-                                <span class="font-mono text-xs font-semibold t-muted">#{{ order.id }}</span>
-                                <p class="font-medium t-primary">{{ order.design.name }}</p>
-                            </div>
-                            {% if order.note %}
-                                <p class="mt-1 max-w-xs truncate text-xs t-secondary">{{ order.note }}</p>
-                            {% endif %}
+                            <span class="font-mono text-xs t-muted">#{{ order.id }}</span>
+                            <p class="font-medium t-primary">{{ order.design.name }}</p>
+                            {% if order.note %}<p class="mt-0.5 max-w-xs truncate text-xs t-secondary">{{ order.note }}</p>{% endif %}
                         </td>
                         <td class="px-5 py-4">
                             <div class="flex items-center gap-2">
@@ -80,7 +90,7 @@
                         <td class="px-5 py-4 whitespace-nowrap t-secondary">{{ order.date }}</td>
                         <td class="px-5 py-4">
                             <span class="qty-badge inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold">
-                                <i data-lucide="package" class="h-3 w-3"></i>{{ order.quantity }} dona
+                                {{ order.quantity }} dona
                             </span>
                         </td>
                         <td class="px-5 py-4">
@@ -94,14 +104,14 @@
                                 {{ order.status.name }}
                             </span>
                         </td>
-                        <td class="px-5 py-4 t-secondary">{{ order.employee.username|default:"—" }}</td>
+                        <td class="px-5 py-4 t-secondary whitespace-nowrap">{{ order.sale_price|floatformat:0 }}</td>
                         <td class="px-5 py-4">
-                            <form method="post" action="{% url 'update_order_status' order.id %}" class="flex items-center gap-2">
+                            <form method="post" action="{% url 'admin_update_order' order.id %}" class="flex items-center gap-2">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                 <select name="status" class="field rounded-xl border px-3 py-2 text-sm">
-                                    {% for status in statuses %}
-                                        <option value="{{ status.id }}" {% if status.id == order.status.id %}selected{% endif %}>{{ status.name }}</option>
+                                    {% for s in statuses %}
+                                        <option value="{{ s.id }}" {% if s.id == order.status.id %}selected{% endif %}>{{ s.name }}</option>
                                     {% endfor %}
                                 </select>
                                 <button type="submit"
@@ -136,7 +146,7 @@
     function applyTheme(){
         var dark = document.documentElement.classList.contains('dark');
         card.style.backgroundColor = dark ? 'rgba(251,191,36,0.10)' : '#fffbeb';
-        card.style.borderColor     = dark ? 'rgba(251,191,36,0.30)' : '#fcd34d';
+        card.style.borderColor = dark ? 'rgba(251,191,36,0.30)' : '#fcd34d';
         card.querySelector('p:first-child').style.color = dark ? '#fcd34d' : '#d97706';
         card.querySelector('p:last-child').style.color  = dark ? '#fde68a' : '#b45309';
     }

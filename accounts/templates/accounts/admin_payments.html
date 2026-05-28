@@ -1,0 +1,116 @@
+{% extends 'accounts/base.html' %}
+{% block title %}To'lovlar — Admin panel{% endblock %}
+{% block content %}
+
+<section class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+    <div>
+        <p class="text-xs font-semibold uppercase tracking-widest t-teal">Admin panel</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight t-primary">To'lovlar</h1>
+    </div>
+    <div class="flex gap-3">
+        <div class="rounded-2xl border card px-5 py-3 shadow-sm text-center">
+            <p class="text-xs t-secondary">Qabul qilingan</p>
+            <p class="mt-0.5 text-xl font-bold t-teal">{{ total_accepted|floatformat:0 }}</p>
+        </div>
+        <div class="rounded-2xl border card px-5 py-3 shadow-sm text-center">
+            <p class="text-xs t-secondary">Kutilayotgan</p>
+            <p class="mt-0.5 text-xl font-bold" style="color:#d97706">{{ total_pending|floatformat:0 }}</p>
+        </div>
+    </div>
+</section>
+
+<!-- Status tabs -->
+<div class="mb-6 flex flex-wrap gap-2">
+    <a href="{% url 'admin_payments' %}"
+       class="rounded-xl px-4 py-2 text-sm font-medium transition-colors
+              {% if not active_status %}bg-teal-500 text-white{% else %}tab-inactive border{% endif %}">
+        Hammasi
+    </a>
+    {% for ps in payment_statuses %}
+        <a href="{% url 'admin_payments' %}?status={{ ps.code }}"
+           class="rounded-xl px-4 py-2 text-sm font-medium transition-colors
+                  {% if active_status == ps.code %}bg-teal-500 text-white{% else %}tab-inactive border{% endif %}">
+            {{ ps.name }}
+        </a>
+    {% endfor %}
+</div>
+
+<!-- Table -->
+<div class="overflow-hidden rounded-2xl border card shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+            <thead>
+                <tr class="table-head border-b" style="border-color:#e4e4e7">
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">ID</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Xaridor</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Zakaz</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Summa</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Sana</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Chek</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Status</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Amal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                    <tr class="row-hover border-b last:border-0 transition-colors" style="border-color:#f4f4f5">
+                        <td class="px-5 py-4 font-mono text-xs t-muted">#{{ payment.id }}</td>
+                        <td class="px-5 py-4 t-secondary">{{ payment.order.buyer.username|default:"—" }}</td>
+                        <td class="px-5 py-4 t-secondary">
+                            <span class="font-mono text-xs t-muted">#{{ payment.order.id }}</span>
+                            <p class="t-primary text-sm">{{ payment.order.design.name }}</p>
+                        </td>
+                        <td class="px-5 py-4 font-semibold t-primary whitespace-nowrap">{{ payment.amount|floatformat:0 }} so'm</td>
+                        <td class="px-5 py-4 whitespace-nowrap t-secondary">{{ payment.date }}</td>
+                        <td class="px-5 py-4">
+                            {% if payment.receipt_image %}
+                                <a href="{{ payment.receipt_image.url }}" target="_blank"
+                                   class="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs t-teal hover:underline" style="border-color:#e4e4e7">
+                                    <i data-lucide="image" class="h-3 w-3"></i>Ko'rish
+                                </a>
+                            {% else %}
+                                <span class="text-xs t-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4">
+                            <span class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium
+                                {% if payment.status.code == 'accepted' %}badge-emerald
+                                {% elif payment.status.code == 'sent' %}badge-amber
+                                {% else %}badge-zinc{% endif %}">
+                                {{ payment.status.name }}
+                            </span>
+                        </td>
+                        <td class="px-5 py-4">
+                            <form method="post" action="{% url 'admin_update_payment' payment.id %}" class="flex items-center gap-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <select name="status" class="field rounded-xl border px-3 py-2 text-sm">
+                                    {% for ps in payment_statuses %}
+                                        <option value="{{ ps.id }}" {% if ps.id == payment.status.id %}selected{% endif %}>{{ ps.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit"
+                                        class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-teal-500 text-white hover:bg-teal-600 transition-colors shadow-sm"
+                                        title="Saqlash">
+                                    <i data-lucide="save" class="h-4 w-4"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-5 py-16 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <span class="empty-icon grid h-14 w-14 place-items-center rounded-2xl">
+                                    <i data-lucide="wallet" class="h-7 w-7 t-muted"></i>
+                                </span>
+                                <p class="t-secondary">To'lov topilmadi.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

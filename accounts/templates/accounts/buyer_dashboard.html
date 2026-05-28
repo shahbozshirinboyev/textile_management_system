@@ -1,51 +1,160 @@
 {% extends 'accounts/base.html' %}
-{% block title %}Buyer kabinet{% endblock %}
+{% block title %}Buyer kabinet — Textile MS{% endblock %}
 {% block content %}
-<section class="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+
+<section class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
     <div>
-        <p class="text-sm font-medium uppercase tracking-[.24em] text-teal-300">Buyer kabinet</p>
-        <h1 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Salom, {{ request.user.get_full_name|default:request.user.username }}</h1>
+        <p class="text-xs font-semibold uppercase tracking-widest t-teal">Buyer kabinet</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight sm:text-4xl t-primary">
+            Salom, {{ request.user.get_full_name|default:request.user.username }} 👋
+        </h1>
+        <p class="mt-1 text-sm t-secondary">Zakazlaringiz va to'lovlaringiz holati</p>
     </div>
-    <div class="flex gap-3">
-        <a href="{% url 'design_catalog' %}" class="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-3 text-sm font-medium hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10"><i data-lucide="images" class="h-4 w-4"></i>Dizaynlar</a>
-        <a href="{% url 'create_order' %}" class="inline-flex items-center gap-2 rounded-lg bg-teal-500 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-600 dark:bg-teal-400 dark:text-zinc-950 dark:hover:bg-teal-300"><i data-lucide="plus" class="h-4 w-4"></i>Zakaz</a>
+    <div class="flex gap-2">
+        <a href="{% url 'design_catalog' %}"
+           class="inline-flex items-center gap-2 rounded-xl border card px-4 py-2.5 text-sm font-medium t-secondary shadow-sm hover:bg-zinc-50 transition-colors">
+            <i data-lucide="images" class="h-4 w-4"></i>Dizaynlar
+        </a>
+        <a href="{% url 'create_order' %}"
+           class="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-teal-600 transition-colors">
+            <i data-lucide="plus" class="h-4 w-4"></i>Yangi zakaz
+        </a>
     </div>
 </section>
 
-<section class="grid gap-4 md:grid-cols-4">
-    <div class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[.06]"><p class="text-sm text-zinc-600 dark:text-zinc-400">Balans</p><p class="mt-2 text-2xl font-semibold">{{ balance }}</p></div>
-    <div class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[.06]"><p class="text-sm text-zinc-600 dark:text-zinc-400">Zakazlar</p><p class="mt-2 text-2xl font-semibold">{{ orders_count }}</p></div>
-    <div class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[.06]"><p class="text-sm text-zinc-600 dark:text-zinc-400">Qabul qilingan to'lov</p><p class="mt-2 text-2xl font-semibold">{{ accepted_payments }}</p></div>
-    <div class="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/[.06]"><p class="text-sm text-zinc-600 dark:text-zinc-400">Zakaz summasi</p><p class="mt-2 text-2xl font-semibold">{{ orders_total }}</p></div>
+<!-- Stats cards -->
+<section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+    <div class="stat-card rounded-2xl border card p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+            <p class="text-sm font-medium t-secondary">Balans</p>
+            <span class="grid h-9 w-9 place-items-center rounded-xl {% if balance >= 0 %}bg-teal-icon{% else %}icon-rose{% endif %}">
+                <i data-lucide="{% if balance >= 0 %}trending-up{% else %}trending-down{% endif %}" class="h-4 w-4"></i>
+            </span>
+        </div>
+        <p class="mt-3 text-2xl font-bold {% if balance >= 0 %}t-teal{% else %}t-rose{% endif %}">
+            {{ balance|floatformat:0 }} so'm
+        </p>
+        <p class="mt-1 text-xs t-muted">To'lov − zakaz summasi</p>
+    </div>
+
+    <div class="stat-card rounded-2xl border card p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+            <p class="text-sm font-medium t-secondary">Zakazlar</p>
+            <span class="grid h-9 w-9 place-items-center rounded-xl icon-indigo">
+                <i data-lucide="package" class="h-4 w-4"></i>
+            </span>
+        </div>
+        <p class="mt-3 text-2xl font-bold t-primary">{{ orders_count }}</p>
+        <p class="mt-1 text-xs t-muted">Jami buyurtmalar</p>
+    </div>
+
+    <div class="stat-card rounded-2xl border card p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+            <p class="text-sm font-medium t-secondary">Qabul qilingan</p>
+            <span class="grid h-9 w-9 place-items-center rounded-xl icon-emerald">
+                <i data-lucide="circle-check" class="h-4 w-4"></i>
+            </span>
+        </div>
+        <p class="mt-3 text-2xl font-bold t-primary">{{ accepted_payments|floatformat:0 }}</p>
+        <p class="mt-1 text-xs t-muted">Tasdiqlangan to'lovlar</p>
+    </div>
+
+    <div class="stat-card rounded-2xl border card p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+            <p class="text-sm font-medium t-secondary">Zakaz summasi</p>
+            <span class="grid h-9 w-9 place-items-center rounded-xl icon-amber">
+                <i data-lucide="receipt" class="h-4 w-4"></i>
+            </span>
+        </div>
+        <p class="mt-3 text-2xl font-bold t-primary">{{ orders_total|floatformat:0 }}</p>
+        <p class="mt-1 text-xs t-muted">Jami zakaz narxi</p>
+    </div>
 </section>
 
-<section class="mt-8 grid gap-6 lg:grid-cols-[1.4fr_.8fr]">
-    <div class="rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/[.06]">
-        <div class="border-b border-zinc-200 p-5 dark:border-white/10"><h2 class="font-semibold">Oxirgi zakazlar</h2></div>
-        <div class="divide-y divide-zinc-200 dark:divide-white/10">
+<!-- Recent orders + payments -->
+<section class="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+
+    <div class="rounded-2xl border card shadow-sm overflow-hidden">
+        <div class="card-header flex items-center justify-between border-b px-6 py-4">
+            <h2 class="font-semibold t-primary">Oxirgi zakazlar</h2>
+            <a href="{% url 'create_order' %}" class="flex items-center gap-1 text-xs font-medium t-teal">
+                <i data-lucide="plus" class="h-3 w-3"></i>Yangi
+            </a>
+        </div>
+        <div>
             {% for order in recent_orders %}
-                <div class="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <p class="font-medium">#{{ order.id }} · {{ order.design.name }}</p>
-                        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ order.date }} · {{ order.status.name }}</p>
+                <div class="card-divider flex items-center justify-between gap-4 border-b px-6 py-4 last:border-0">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono text-xs font-semibold t-muted">#{{ order.id }}</span>
+                            <p class="truncate font-medium t-primary">{{ order.design.name }}</p>
+                        </div>
+                        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs t-secondary">
+                            <span>{{ order.date }}</span>
+                            <span>·</span>
+                            <span>{{ order.quantity }} dona</span>
+                            <span>·</span>
+                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
+                                {% if order.status.code == 'sent' %}badge-amber
+                                {% elif order.status.code == 'accepted' %}badge-teal
+                                {% elif order.status.code == 'in_progress' %}badge-blue
+                                {% elif order.status.code == 'completed' %}badge-emerald
+                                {% elif order.status.code == 'cancelled' %}badge-red
+                                {% else %}badge-zinc{% endif %}">
+                                {{ order.status.name }}
+                            </span>
+                        </div>
                     </div>
-                    <a class="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10" href="{% url 'create_payment_for_order' order.id %}"><i data-lucide="receipt" class="h-4 w-4"></i>To'lov</a>
+                    <a href="{% url 'create_payment_for_order' order.id %}"
+                       class="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium t-secondary hover:bg-zinc-50 transition-colors">
+                        <i data-lucide="credit-card" class="h-3 w-3"></i>To'lov
+                    </a>
                 </div>
             {% empty %}
-                <p class="p-5 text-sm text-zinc-600 dark:text-zinc-400">Hali zakaz yo'q.</p>
+                <div class="flex flex-col items-center gap-3 px-6 py-10 text-center">
+                    <span class="empty-icon grid h-12 w-12 place-items-center rounded-2xl">
+                        <i data-lucide="package-open" class="h-6 w-6 t-muted"></i>
+                    </span>
+                    <p class="text-sm t-secondary">Hali zakaz yo'q</p>
+                    <a href="{% url 'design_catalog' %}" class="text-sm font-medium t-teal hover:underline">
+                        Dizaynlarni ko'rish →
+                    </a>
+                </div>
             {% endfor %}
         </div>
     </div>
-    <div class="rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/[.06]">
-        <div class="border-b border-zinc-200 p-5 dark:border-white/10"><h2 class="font-semibold">To'lovlar</h2></div>
-        <div class="divide-y divide-zinc-200 dark:divide-white/10">
+
+    <div class="rounded-2xl border card shadow-sm overflow-hidden">
+        <div class="card-header flex items-center justify-between border-b px-6 py-4">
+            <h2 class="font-semibold t-primary">To'lovlar</h2>
+            <a href="{% url 'create_payment' %}" class="flex items-center gap-1 text-xs font-medium t-teal">
+                <i data-lucide="plus" class="h-3 w-3"></i>Yangi
+            </a>
+        </div>
+        <div>
             {% for payment in recent_payments %}
-                <div class="p-5">
-                    <p class="font-medium">{{ payment.amount }}</p>
-                    <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">#{{ payment.order.id }} · {{ payment.status.name }}</p>
+                <div class="card-divider border-b px-6 py-4 last:border-0">
+                    <div class="flex items-center justify-between">
+                        <p class="font-semibold t-primary">{{ payment.amount|floatformat:0 }} so'm</p>
+                        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
+                            {% if payment.status.code == 'accepted' %}badge-emerald
+                            {% elif payment.status.code == 'sent' %}badge-amber
+                            {% else %}badge-zinc{% endif %}">
+                            {{ payment.status.name }}
+                        </span>
+                    </div>
+                    <p class="mt-1 text-xs t-secondary">
+                        Zakaz #{{ payment.order.id }} · {{ payment.order.design.name }}
+                    </p>
                 </div>
             {% empty %}
-                <p class="p-5 text-sm text-zinc-600 dark:text-zinc-400">Hali to'lov yuborilmagan.</p>
+                <div class="flex flex-col items-center gap-3 px-6 py-10 text-center">
+                    <span class="empty-icon grid h-12 w-12 place-items-center rounded-2xl">
+                        <i data-lucide="wallet" class="h-6 w-6 t-muted"></i>
+                    </span>
+                    <p class="text-sm t-secondary">Hali to'lov yuborilmagan</p>
+                </div>
             {% endfor %}
         </div>
     </div>

@@ -1,0 +1,125 @@
+{% extends 'accounts/base.html' %}
+{% block title %}Foydalanuvchilar — Admin panel{% endblock %}
+{% block content %}
+
+<section class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+    <div>
+        <p class="text-xs font-semibold uppercase tracking-widest t-teal">Admin panel</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight t-primary">Foydalanuvchilar</h1>
+    </div>
+    <div class="flex gap-3">
+        <div class="rounded-2xl border card px-4 py-3 shadow-sm text-center">
+            <p class="text-xs t-secondary">Xaridorlar</p>
+            <p class="mt-0.5 text-xl font-bold t-primary">{{ buyers }}</p>
+        </div>
+        <div class="rounded-2xl border card px-4 py-3 shadow-sm text-center">
+            <p class="text-xs t-secondary">Ishchilar</p>
+            <p class="mt-0.5 text-xl font-bold t-primary">{{ employees }}</p>
+        </div>
+        <div class="rounded-2xl border card px-4 py-3 shadow-sm text-center">
+            <p class="text-xs t-secondary">Adminlar</p>
+            <p class="mt-0.5 text-xl font-bold t-primary">{{ admins }}</p>
+        </div>
+    </div>
+</section>
+
+<!-- Role filter tabs -->
+<div class="mb-6 flex flex-wrap gap-2">
+    <a href="{% url 'admin_users' %}"
+       class="rounded-xl px-4 py-2 text-sm font-medium transition-colors
+              {% if not role_filter %}bg-teal-500 text-white{% else %}tab-inactive border{% endif %}">
+        Hammasi
+    </a>
+    <a href="{% url 'admin_users' %}?role=buyer"
+       class="rounded-xl px-4 py-2 text-sm font-medium transition-colors
+              {% if role_filter == 'buyer' %}bg-teal-500 text-white{% else %}tab-inactive border{% endif %}">
+        Xaridorlar
+    </a>
+    <a href="{% url 'admin_users' %}?role=employee"
+       class="rounded-xl px-4 py-2 text-sm font-medium transition-colors
+              {% if role_filter == 'employee' %}bg-teal-500 text-white{% else %}tab-inactive border{% endif %}">
+        Ishchilar
+    </a>
+    <a href="{% url 'admin_users' %}?role=admin"
+       class="rounded-xl px-4 py-2 text-sm font-medium transition-colors
+              {% if role_filter == 'admin' %}bg-teal-500 text-white{% else %}tab-inactive border{% endif %}">
+        Adminlar
+    </a>
+</div>
+
+<!-- Table -->
+<div class="overflow-hidden rounded-2xl border card shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-sm">
+            <thead>
+                <tr class="table-head border-b" style="border-color:#e4e4e7">
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Foydalanuvchi</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Email</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Rol</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Qo'shilgan</th>
+                    <th class="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider t-secondary">Rolni o'zgartirish</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                    <tr class="row-hover border-b last:border-0 transition-colors" style="border-color:#f4f4f5">
+                        <td class="px-5 py-4">
+                            <div class="flex items-center gap-3">
+                                <span class="badge-indigo grid h-9 w-9 place-items-center rounded-full text-sm font-bold shrink-0">
+                                    {{ u.username|slice:":1"|upper }}
+                                </span>
+                                <div>
+                                    <p class="font-medium t-primary">{{ u.username }}</p>
+                                    {% if u.get_full_name %}
+                                        <p class="text-xs t-secondary">{{ u.get_full_name }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-5 py-4 t-secondary">{{ u.email|default:"—" }}</td>
+                        <td class="px-5 py-4">
+                            {% if u.is_staff or u.is_superuser %}
+                                <span class="badge-indigo inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium">Admin</span>
+                            {% elif u.profile.role == 'employee' %}
+                                <span class="badge-amber inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium">Ishchi</span>
+                            {% else %}
+                                <span class="badge-teal inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium">Xaridor</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4 whitespace-nowrap t-secondary text-xs">{{ u.date_joined|date:"d.m.Y" }}</td>
+                        <td class="px-5 py-4">
+                            {% if not u.is_superuser and u != request.user %}
+                                <form method="post" action="{% url 'admin_update_user_role' u.id %}" class="flex items-center gap-2">
+                                    {% csrf_token %}
+                                    <select name="role" class="field rounded-xl border px-3 py-2 text-sm">
+                                        <option value="buyer" {% if not u.is_staff and u.profile.role == 'buyer' %}selected{% endif %}>Xaridor</option>
+                                        <option value="employee" {% if not u.is_staff and u.profile.role == 'employee' %}selected{% endif %}>Ishchi</option>
+                                    </select>
+                                    <button type="submit"
+                                            class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-teal-500 text-white hover:bg-teal-600 transition-colors shadow-sm"
+                                            title="Saqlash">
+                                        <i data-lucide="save" class="h-4 w-4"></i>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="text-xs t-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-5 py-16 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <span class="empty-icon grid h-14 w-14 place-items-center rounded-2xl">
+                                    <i data-lucide="users" class="h-7 w-7 t-muted"></i>
+                                </span>
+                                <p class="t-secondary">Foydalanuvchi topilmadi.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

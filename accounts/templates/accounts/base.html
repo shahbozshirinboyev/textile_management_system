@@ -4,46 +4,365 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Textile System{% endblock %}</title>
+    <!-- Dark mode must run before Tailwind loads -->
     <script>
-        tailwind = { config: { darkMode: 'class' } };
-        const savedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.classList.toggle('dark', savedTheme ? savedTheme === 'dark' : prefersDark);
+        (function(){
+            var t = localStorage.getItem('theme');
+            var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if(t === 'dark' || (!t && d)) document.documentElement.classList.add('dark');
+        })();
     </script>
+    <script>tailwind={config:{darkMode:'class'}}</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        /* =====================================================
+           GLOBAL THEME SYSTEM
+           All colors defined here — no reliance on Tailwind
+           dark: prefix variants (CDN doesn't generate them).
+           ===================================================== */
+
+        /* Base */
+        body {
+            font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+            background-color: #fafafa;
+            color: #09090b;
+        }
+        .dark body, html.dark body {
+            background-color: #09090b;
+            color: #f4f4f5;
+        }
+
+        /* Page background gradient */
+        .bg-gradient-page {
+            background:
+                radial-gradient(ellipse at top left,  rgba(20,184,166,.10) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(99,102,241,.06) 0%, transparent 50%),
+                linear-gradient(135deg, #fafafa 0%, #f4f4f5 55%, #eef2ff 100%);
+        }
+        .dark .bg-gradient-page {
+            background:
+                radial-gradient(ellipse at top left,  rgba(20,184,166,.12) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(99,102,241,.08) 0%, transparent 50%),
+                linear-gradient(135deg, #09090b 0%, #18181b 55%, #111827 100%);
+        }
+
+        /* ---- Text colours ---- */
+        .t-primary   { color: #09090b; }
+        .dark .t-primary   { color: #f4f4f5; }
+
+        .t-secondary { color: #52525b; }
+        .dark .t-secondary { color: #a1a1aa; }
+
+        .t-muted     { color: #71717a; }
+        .dark .t-muted     { color: #71717a; }
+
+        .t-teal      { color: #0d9488; }
+        .dark .t-teal      { color: #2dd4bf; }
+
+        .t-rose      { color: #e11d48; }
+        .dark .t-rose      { color: #fda4af; }
+
+        /* ---- Header ---- */
+        .header-bg {
+            background-color: rgba(255,255,255,0.90);
+            border-color: rgba(228,228,231,0.80);
+        }
+        .dark .header-bg {
+            background-color: rgba(9,9,11,0.85);
+            border-color: rgba(255,255,255,0.08);
+        }
+
+        /* ---- Cards ---- */
+        .card {
+            background-color: #ffffff;
+            border-color: #e4e4e7;
+        }
+        .dark .card {
+            background-color: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.10);
+        }
+
+        .card-header { border-color: #f0f0f0; }
+        .dark .card-header { border-color: rgba(255,255,255,0.08); }
+
+        .card-divider { border-color: #f4f4f5; }
+        .dark .card-divider { border-color: rgba(255,255,255,0.06); }
+
+        /* ---- Inputs ---- */
+        .field {
+            background-color: #ffffff;
+            border-color: #d4d4d8;
+            color: #09090b;
+        }
+        .dark .field {
+            background-color: rgba(9,9,11,0.70);
+            border-color: rgba(255,255,255,0.12);
+            color: #f4f4f5;
+        }
+        .field::placeholder { color: #a1a1aa; }
+        .field:focus {
+            border-color: #14b8a6;
+            box-shadow: 0 0 0 3px rgba(20,184,166,0.18);
+            outline: none;
+        }
+
+        /* ---- Teal accents ---- */
+        .bg-teal-soft {
+            background-color: rgba(20,184,166,0.10);
+        }
+        .dark .bg-teal-soft {
+            background-color: rgba(20,184,166,0.15);
+        }
+
+        .bg-teal-icon {
+            background-color: rgba(20,184,166,0.12);
+            color: #0d9488;
+        }
+        .dark .bg-teal-icon {
+            background-color: rgba(20,184,166,0.18);
+            color: #2dd4bf;
+        }
+
+        /* ---- Icon pills ---- */
+        .icon-indigo  { background-color: rgba(99,102,241,0.12); color: #4f46e5; }
+        .dark .icon-indigo  { background-color: rgba(129,140,248,0.15); color: #a5b4fc; }
+
+        .icon-emerald { background-color: rgba(16,185,129,0.12); color: #059669; }
+        .dark .icon-emerald { background-color: rgba(52,211,153,0.15); color: #6ee7b7; }
+
+        .icon-amber   { background-color: rgba(245,158,11,0.12); color: #d97706; }
+        .dark .icon-amber   { background-color: rgba(251,191,36,0.15); color: #fcd34d; }
+
+        .icon-rose    { background-color: rgba(244,63,94,0.12); color: #e11d48; }
+        .dark .icon-rose    { background-color: rgba(251,113,133,0.15); color: #fda4af; }
+
+        /* ---- Status badges ---- */
+        .badge-amber   { background-color: #fef3c7; color: #92400e; }
+        .dark .badge-amber   { background-color: rgba(251,191,36,0.15); color: #fcd34d; }
+
+        .badge-teal    { background-color: #ccfbf1; color: #0f766e; }
+        .dark .badge-teal    { background-color: rgba(20,184,166,0.15); color: #2dd4bf; }
+
+        .badge-blue    { background-color: #dbeafe; color: #1d4ed8; }
+        .dark .badge-blue    { background-color: rgba(96,165,250,0.15); color: #93c5fd; }
+
+        .badge-emerald { background-color: #d1fae5; color: #065f46; }
+        .dark .badge-emerald { background-color: rgba(52,211,153,0.15); color: #6ee7b7; }
+
+        .badge-red     { background-color: #fee2e2; color: #991b1b; }
+        .dark .badge-red     { background-color: rgba(248,113,113,0.15); color: #fca5a5; }
+
+        .badge-zinc    { background-color: #f4f4f5; color: #3f3f46; }
+        .dark .badge-zinc    { background-color: rgba(255,255,255,0.10); color: #a1a1aa; }
+
+        .badge-indigo  { background-color: #e0e7ff; color: #3730a3; }
+        .dark .badge-indigo  { background-color: rgba(129,140,248,0.15); color: #a5b4fc; }
+
+        /* ---- Alert boxes ---- */
+        .alert-success {
+            background-color: #f0fdf9;
+            border-color: rgba(20,184,166,0.30);
+            color: #0f766e;
+        }
+        .dark .alert-success {
+            background-color: rgba(20,184,166,0.10);
+            border-color: rgba(20,184,166,0.25);
+            color: #99f6e4;
+        }
+
+        .alert-error {
+            background-color: #fef2f2;
+            border-color: rgba(239,68,68,0.30);
+            color: #991b1b;
+        }
+        .dark .alert-error {
+            background-color: rgba(248,113,113,0.10);
+            border-color: rgba(248,113,113,0.25);
+            color: #fca5a5;
+        }
+
+        /* ---- Misc UI ---- */
+        .user-badge {
+            background-color: #f4f4f5;
+            border-color: #e4e4e7;
+        }
+        .dark .user-badge {
+            background-color: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.10);
+        }
+
+        .hint-box { background-color: #f4f4f5; }
+        .dark .hint-box { background-color: rgba(255,255,255,0.05); }
+
+        .table-head { background-color: #fafafa; }
+        .dark .table-head { background-color: rgba(255,255,255,0.03); }
+
+        .empty-icon { background-color: #f4f4f5; }
+        .dark .empty-icon { background-color: rgba(255,255,255,0.07); }
+
+        .qty-badge { background-color: #f4f4f5; color: #3f3f46; }
+        .dark .qty-badge { background-color: rgba(255,255,255,0.10); color: #d4d4d8; }
+
+        .tab-inactive {
+            background-color: #ffffff;
+            border-color: #e4e4e7;
+            color: #52525b;
+        }
+        .dark .tab-inactive {
+            background-color: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.10);
+            color: #a1a1aa;
+        }
+        .tab-inactive:hover { background-color: #f4f4f5; }
+        .dark .tab-inactive:hover { background-color: rgba(255,255,255,0.08); }
+
+        .logout-btn:hover {
+            background-color: #fff1f2;
+            border-color: #fecdd3;
+            color: #e11d48;
+        }
+        .dark .logout-btn:hover {
+            background-color: rgba(244,63,94,0.10);
+            border-color: rgba(244,63,94,0.25);
+            color: #fda4af;
+        }
+
+        .color-row { background-color: #fafafa; }
+        .dark .color-row { background-color: rgba(255,255,255,0.03); }
+        .color-row:hover { background-color: #f0f0f0; }
+        .dark .color-row:hover { background-color: rgba(255,255,255,0.06); }
+
+        .row-hover:hover { background-color: rgba(0,0,0,0.02); }
+        .dark .row-hover:hover { background-color: rgba(255,255,255,0.02); }
+
+        .stat-card { transition: transform .15s ease, box-shadow .15s ease; }
+        .stat-card:hover { transform: translateY(-2px); }
+
+        /* Chip (color tag) */
+        .chip { border: 1px solid #e4e4e7; background-color: #fafafa; }
+        .dark .chip { border-color: rgba(255,255,255,0.10); background-color: rgba(255,255,255,0.05); }
+
+        /* Image placeholder bg */
+        .img-placeholder { background-color: #f4f4f5; }
+        .dark .img-placeholder { background-color: #18181b; }
+
+        /* Small stat box inside detail card */
+        .stat-mini { background-color: #fafafa; }
+        .dark .stat-mini { background-color: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08) !important; }
+
+        /* Qty +/- buttons */
+        .qty-btn { background-color: #f4f4f5; border-color: #e4e4e7; color: #52525b; }
+        .dark .qty-btn { background-color: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.10); color: #a1a1aa; }
+        .qty-btn:hover { background-color: #e4e4e7; }
+        .dark .qty-btn:hover { background-color: rgba(255,255,255,0.10); }
+
+        /* ---- Tailwind dark: overrides for text ----
+           These ensure text classes work even if CDN
+           doesn't generate dark: variants at runtime. */
+        .dark .text-zinc-900  { color: #f4f4f5 !important; }
+        .dark .text-zinc-800  { color: #e4e4e7 !important; }
+        .dark .text-zinc-700  { color: #d4d4d8 !important; }
+        .dark .text-zinc-600  { color: #a1a1aa !important; }
+        .dark .text-zinc-500  { color: #71717a !important; }
+        .dark .text-zinc-400  { color: #52525b !important; }
+
+        .dark .bg-white       { background-color: rgba(255,255,255,0.04) !important; }
+        .dark .bg-zinc-50     { background-color: rgba(255,255,255,0.03) !important; }
+        .dark .bg-zinc-100    { background-color: rgba(255,255,255,0.07) !important; }
+
+        .dark .border-zinc-200 { border-color: rgba(255,255,255,0.10) !important; }
+        .dark .border-zinc-100 { border-color: rgba(255,255,255,0.06) !important; }
+
+        .dark .divide-zinc-200 > * + * { border-color: rgba(255,255,255,0.08) !important; }
+        .dark .divide-zinc-100 > * + * { border-color: rgba(255,255,255,0.06) !important; }
     </style>
 </head>
-<body class="min-h-screen bg-zinc-50 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-100">
-    <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,.14),transparent_32rem),linear-gradient(135deg,#fafafa,#f4f4f5_55%,#eef2ff)] dark:bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,.18),transparent_32rem),linear-gradient(135deg,#09090b,#18181b_55%,#111827)]"></div>
-    <header class="border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-white/10 dark:bg-zinc-950/70">
-        <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-            <a href="{% url 'public_home' %}" class="flex items-center gap-3 font-semibold tracking-tight">
-                <span class="grid h-10 w-10 place-items-center rounded-lg bg-teal-500 text-white dark:bg-teal-400 dark:text-zinc-950">
-                    <i data-lucide="layers-3" class="h-5 w-5"></i>
+<body class="min-h-screen font-sans">
+
+    <!-- Background -->
+    <div class="fixed inset-0 -z-10 bg-gradient-page"></div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 border-b header-bg backdrop-blur-md">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+
+            <!-- Logo -->
+            <a href="{% url 'public_home' %}" class="flex items-center gap-3 font-semibold tracking-tight group">
+                <span class="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 text-white shadow-md">
+                    <i data-lucide="layers-3" class="h-4 w-4"></i>
                 </span>
-                <span>Textile Management</span>
+                <span class="hidden sm:block">Textile <span class="text-teal-500 dark:text-teal-400">MS</span></span>
             </a>
-            <nav class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+
+            <!-- Nav -->
+            <nav class="flex items-center gap-1 text-sm">
                 {% if user.is_authenticated %}
-                    {% if user.profile.role == 'buyer' %}
-                        <a class="rounded-lg px-3 py-2 hover:bg-zinc-100 dark:hover:bg-white/10" href="{% url 'buyer_dashboard' %}">Kabinet</a>
-                        <a class="rounded-lg px-3 py-2 hover:bg-zinc-100 dark:hover:bg-white/10" href="{% url 'design_catalog' %}">Dizaynlar</a>
+                    {% if user.is_staff or user.is_superuser %}
+                        <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium t-secondary hover:bg-zinc-100 transition-colors"
+                           href="{% url 'admin_dashboard' %}">
+                            <i data-lucide="layout-dashboard" class="h-3.5 w-3.5"></i>Panel
+                        </a>
+                        <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium t-secondary hover:bg-zinc-100 transition-colors"
+                           href="{% url 'admin_orders' %}">
+                            <i data-lucide="clipboard-list" class="h-3.5 w-3.5"></i>Zakazlar
+                        </a>
+                        <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium t-secondary hover:bg-zinc-100 transition-colors"
+                           href="{% url 'admin_payments' %}">
+                            <i data-lucide="credit-card" class="h-3.5 w-3.5"></i>To'lovlar
+                        </a>
+                        <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium t-secondary hover:bg-zinc-100 transition-colors"
+                           href="{% url 'admin_users' %}">
+                            <i data-lucide="users" class="h-3.5 w-3.5"></i>Foydalanuvchilar
+                        </a>
                     {% elif user.profile.role == 'employee' %}
-                        <a class="rounded-lg px-3 py-2 hover:bg-zinc-100 dark:hover:bg-white/10" href="{% url 'employee_orders' %}">Zakazlar</a>
+                        <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium t-secondary hover:bg-zinc-100 transition-colors"
+                           href="{% url 'employee_orders' %}">
+                            <i data-lucide="clipboard-list" class="h-3.5 w-3.5"></i>Zakazlar
+                        </a>
+                    {% elif user.profile.role == 'buyer' %}
+                        <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium t-secondary hover:bg-zinc-100 transition-colors"
+                           href="{% url 'buyer_dashboard' %}">
+                            <i data-lucide="layout-dashboard" class="h-3.5 w-3.5"></i>Kabinet
+                        </a>
+                        <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium t-secondary hover:bg-zinc-100 transition-colors"
+                           href="{% url 'design_catalog' %}">
+                            <i data-lucide="images" class="h-3.5 w-3.5"></i>Dizaynlar
+                        </a>
                     {% endif %}
-                    <form method="post" action="{% url 'logout' %}">
+
+                    <!-- User badge -->
+                    <div class="mx-1 flex items-center gap-2 rounded-lg border user-badge px-3 py-1.5">
+                        <span class="grid h-6 w-6 place-items-center rounded-full bg-teal-icon text-xs">
+                            <i data-lucide="user" class="h-3 w-3"></i>
+                        </span>
+                        <span class="hidden text-xs font-medium t-secondary sm:block">
+                            {{ request.user.get_full_name|default:request.user.username }}
+                        </span>
+                    </div>
+
+                    <!-- Logout trigger button (opens modal) -->
+                    <button id="logout-trigger"
+                            class="logout-btn grid h-9 w-9 place-items-center rounded-lg border border-zinc-200 t-muted transition-colors"
+                            title="Chiqish">
+                        <i data-lucide="log-out" class="h-4 w-4"></i>
+                    </button>
+
+                    <!-- Hidden logout form -->
+                    <form id="logout-form" method="post" action="{% url 'logout' %}" class="hidden">
                         {% csrf_token %}
-                        <button class="grid h-10 w-10 place-items-center rounded-lg border border-zinc-200 hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10" title="Chiqish">
-                            <i data-lucide="log-out" class="h-4 w-4"></i>
-                        </button>
                     </form>
                 {% else %}
-                    <a class="rounded-lg px-3 py-2 hover:bg-zinc-100 dark:hover:bg-white/10" href="{% url 'login' %}">Kirish</a>
+                    <a class="rounded-lg px-3 py-2 font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
+                       href="{% url 'login' %}">Kirish</a>
                 {% endif %}
-                <button id="theme-toggle" class="grid h-10 w-10 place-items-center rounded-lg border border-zinc-200 hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-white/10" title="Theme">
+
+                <!-- Theme toggle -->
+                <button id="theme-toggle"
+                        class="grid h-9 w-9 place-items-center rounded-lg border border-zinc-200 dark:border-white/10 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors"
+                        title="Mavzu">
                     <i data-lucide="sun" class="hidden h-4 w-4 dark:block"></i>
                     <i data-lucide="moon" class="h-4 w-4 dark:hidden"></i>
                 </button>
@@ -51,22 +370,128 @@
         </div>
     </header>
 
+    <!-- Main -->
     <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {% if messages %}
-            <div class="mb-6 space-y-3">
+            <div class="mb-6 space-y-2">
                 {% for message in messages %}
-                    <div class="rounded-lg border border-teal-500/30 bg-teal-500/10 px-4 py-3 text-sm text-teal-700 dark:border-teal-400/30 dark:bg-teal-400/10 dark:text-teal-100">{{ message }}</div>
+                    <div class="alert-success flex items-start gap-3 rounded-xl border px-4 py-3 text-sm">
+                        <i data-lucide="check-circle-2" class="mt-0.5 h-4 w-4 shrink-0 text-teal-500"></i>
+                        {{ message }}
+                    </div>
                 {% endfor %}
             </div>
         {% endif %}
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Footer -->
+    <footer class="mt-16 border-t border-zinc-200 dark:border-white/10">
+        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <p class="text-center text-xs text-zinc-400 dark:text-zinc-600">© 2026 Textile Management System</p>
+        </div>
+    </footer>
+
+    <!-- ── Logout confirmation modal ─────────────────────── -->
+    <div id="logout-modal"
+         class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+         style="display:none !important">
+
+        <!-- Backdrop -->
+        <div id="logout-backdrop"
+             class="absolute inset-0"
+             style="background-color:rgba(0,0,0,0.45); backdrop-filter:blur(4px)"></div>
+
+        <!-- Dialog -->
+        <div id="logout-dialog"
+             class="relative w-full max-w-sm rounded-2xl border card shadow-2xl p-6"
+             style="transform:scale(0.95); opacity:0; transition:transform .18s ease, opacity .18s ease">
+
+            <!-- Icon -->
+            <div class="mb-4 flex justify-center">
+                <span class="grid h-14 w-14 place-items-center rounded-2xl icon-rose">
+                    <i data-lucide="log-out" class="h-7 w-7"></i>
+                </span>
+            </div>
+
+            <!-- Text -->
+            <h2 class="text-center text-lg font-bold t-primary">Chiqmoqchimisiz?</h2>
+            <p class="mt-2 text-center text-sm t-secondary">
+                Hisobingizdan chiqiladi. Qayta kirish uchun login kerak bo'ladi.
+            </p>
+
+            <!-- Buttons -->
+            <div class="mt-6 flex gap-3">
+                <button id="logout-cancel"
+                        class="flex-1 rounded-xl border px-4 py-2.5 text-sm font-medium t-secondary transition-colors hover:bg-zinc-50"
+                        style="border-color:#e4e4e7">
+                    Bekor qilish
+                </button>
+                <button id="logout-confirm"
+                        class="flex-1 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-rose-600 transition-colors">
+                    Ha, chiqish
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- ─────────────────────────────────────────────────── -->
+
     <script>
+        /* ── Theme toggle ── */
         document.getElementById('theme-toggle')?.addEventListener('click', function () {
-            const isDark = document.documentElement.classList.toggle('dark');
+            var isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
         });
+
+        /* ── Logout modal ── */
+        (function () {
+            var modal    = document.getElementById('logout-modal');
+            var dialog   = document.getElementById('logout-dialog');
+            var backdrop = document.getElementById('logout-backdrop');
+            var trigger  = document.getElementById('logout-trigger');
+            var cancel   = document.getElementById('logout-cancel');
+            var confirm  = document.getElementById('logout-confirm');
+            var form     = document.getElementById('logout-form');
+
+            if (!trigger || !modal) return;
+
+            function openModal() {
+                modal.style.removeProperty('display');
+                // Animate in
+                requestAnimationFrame(function () {
+                    dialog.style.transform = 'scale(1)';
+                    dialog.style.opacity   = '1';
+                });
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                dialog.style.transform = 'scale(0.95)';
+                dialog.style.opacity   = '0';
+                setTimeout(function () {
+                    modal.style.setProperty('display', 'none', 'important');
+                    document.body.style.overflow = '';
+                }, 180);
+            }
+
+            trigger.addEventListener('click', openModal);
+            cancel.addEventListener('click', closeModal);
+            backdrop.addEventListener('click', closeModal);
+
+            // ESC key closes modal
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeModal();
+            });
+
+            confirm.addEventListener('click', function () {
+                confirm.disabled = true;
+                confirm.textContent = 'Chiqilmoqda...';
+                form.submit();
+            });
+        })();
+
         lucide.createIcons();
     </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

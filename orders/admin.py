@@ -17,11 +17,17 @@ class OrderAdmin(admin.ModelAdmin):
         'buyer',
         'employee',
         'date',
+        'quantity',
         'status',
         'cost_price',
         'sale_price',
+        'total_sale_price_display',
     ]
     list_filter = ['status', 'date', 'employee']
     search_fields = ['id', 'design__name', 'buyer__username', 'employee__username', 'note']
     autocomplete_fields = ['design', 'buyer', 'employee', 'status']
     date_hierarchy = 'date'
+
+    def total_sale_price_display(self, obj):
+        return obj.total_sale_price
+    total_sale_price_display.short_description = 'Jami narx'

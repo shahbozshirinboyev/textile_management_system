@@ -26,11 +26,13 @@ class ExpenseTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Expense)
 class ExpenseAdmin(admin.ModelAdmin):
-    list_display = ['id', 'date', 'type', 'amount', 'total_amount']
+    list_display = ['id', 'date', 'type', 'quantity', 'amount', 'total_amount', 'note']
     list_filter = ['type', 'date']
-    search_fields = ['id', 'type__name']
+    search_fields = ['id', 'type__name', 'note']
     autocomplete_fields = ['type']
     date_hierarchy = 'date'
+    readonly_fields = ['total_amount']
+    fields = ['date', 'type', 'quantity', 'amount', 'total_amount', 'note']
 
 
 @admin.register(Statistics)
@@ -42,3 +44,10 @@ class StatisticsAdmin(admin.ModelAdmin):
         'monthly_expenses_total',
     ]
     date_hierarchy = 'month'
+    readonly_fields = [
+        'monthly_orders_total',
+        'monthly_payments_total',
+        'monthly_expenses_total',
+        'updated_at',
+        'created_at',
+    ]
