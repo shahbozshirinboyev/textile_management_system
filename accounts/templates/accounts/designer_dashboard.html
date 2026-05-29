@@ -1,0 +1,209 @@
+{% extends 'accounts/base.html' %}
+{% load num_filters %}
+{% block title %}Designer Dashboard — Textile MS{% endblock %}
+{% block content %}
+
+<!-- Header -->
+<section class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+    <div>
+        <p class="text-xs font-semibold uppercase tracking-widest t-teal">Designer panel</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight sm:text-4xl t-primary">Dizaynlar</h1>
+        <p class="mt-1 text-sm t-secondary">Dizaynlarni boshqaring, yangi qo'shing yoki tahrirlang</p>
+    </div>
+    <a href="{% url 'designer_design_create' %}"
+       class="inline-flex items-center gap-2 rounded-2xl bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-teal-600 transition-colors">
+        <i data-lucide="plus" class="h-4 w-4"></i>
+        Yangi dizayn
+    </a>
+</section>
+
+<!-- Stats -->
+<div class="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
+    <div class="stat-card rounded-2xl border card p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-xl bg-teal-icon">
+                <i data-lucide="layers-3" class="h-5 w-5"></i>
+            </span>
+            <div>
+                <p class="text-xs t-secondary">Jami dizaynlar</p>
+                <p class="text-2xl font-bold t-primary">{{ total_designs|num }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card rounded-2xl border card p-5 shadow-sm">
+        <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-xl icon-indigo">
+                <i data-lucide="palette" class="h-5 w-5"></i>
+            </span>
+            <div>
+                <p class="text-xs t-secondary">Jami ranglar</p>
+                <p class="text-2xl font-bold t-primary">{{ total_colors|num }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="stat-card rounded-2xl border card p-5 shadow-sm col-span-2 sm:col-span-1">
+        <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 place-items-center rounded-xl icon-emerald">
+                <i data-lucide="user-circle" class="h-5 w-5"></i>
+            </span>
+            <div>
+                <p class="text-xs t-secondary">Dizayner</p>
+                <p class="text-base font-semibold t-primary">{{ request.user.get_full_name|default:request.user.username }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Designs grid -->
+{% if designs %}
+<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    {% for design in designs %}
+    <article class="group overflow-hidden rounded-2xl border card shadow-sm hover:shadow-md transition-all duration-200">
+
+        <!-- Image -->
+        <div class="relative aspect-video overflow-hidden img-placeholder">
+            {% if design.image %}
+                <img src="{{ design.image.url }}" alt="{{ design.name }}"
+                     class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300">
+            {% else %}
+                <div class="flex h-full items-center justify-center">
+                    <i data-lucide="image-off" class="h-10 w-10 t-muted opacity-40"></i>
+                </div>
+            {% endif %}
+            {% if design.is_printable %}
+                <span class="absolute right-2 top-2 badge-indigo rounded-full px-2 py-0.5 text-xs font-medium">
+                    Chop etish
+                </span>
+            {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div class="p-4">
+            <h3 class="font-semibold t-primary truncate">{{ design.name }}</h3>
+
+            <div class="mt-3 flex flex-wrap gap-2 text-xs">
+                <span class="qty-badge inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-medium">
+                    <i data-lucide="palette" class="h-3 w-3"></i>
+                    {{ design.colors.count|num }} rang
+                </span>
+                <span class="qty-badge inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-medium">
+                    <i data-lucide="gem" class="h-3 w-3"></i>
+                    {{ design.total_stones|num }} tosh
+                </span>
+                {% if design.scotch %}
+                <span class="qty-badge inline-flex items-center gap-1 rounded-lg px-2.5 py-1 font-medium">
+                    <i data-lucide="ruler" class="h-3 w-3"></i>
+                    {{ design.scotch_length|numf }} sm
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Color chips -->
+            {% if design.colors.all %}
+            <div class="mt-3 flex flex-wrap gap-1.5">
+                {% for dc in design.colors.all %}
+                    <div class="chip flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs">
+                        {% if dc.color.label %}
+                            <img src="{{ dc.color.label.url }}" class="h-4 w-10 rounded object-cover" alt="{{ dc.color.name }}">
+                        {% endif %}
+                        <span class="t-secondary">{{ dc.color.name }}</span>
+                        <span class="font-semibold t-primary">{{ dc.stone_count|num }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="mt-4 flex gap-2 border-t card-divider pt-4">
+                <a href="{% url 'designer_design_edit' design.id %}"
+                   class="flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium t-secondary transition-colors hover:bg-zinc-50 tab-inactive">
+                    <i data-lucide="pencil" class="h-3.5 w-3.5"></i>
+                    Tahrirlash
+                </a>
+                <button onclick="openDeleteModal('{{ design.id }}', '{{ design.name|escapejs }}')"
+                        class="flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 px-3 py-2 text-xs font-medium text-rose-500 transition-colors hover:bg-rose-50">
+                    <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                    O'chirish
+                </button>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="flex flex-col items-center justify-center rounded-2xl border card py-20 text-center">
+    <span class="empty-icon grid h-16 w-16 place-items-center rounded-2xl mb-4">
+        <i data-lucide="layers-3" class="h-8 w-8 t-muted"></i>
+    </span>
+    <p class="font-medium t-primary">Hali dizayn yo'q</p>
+    <p class="mt-1 text-sm t-secondary">Birinchi dizaynni qo'shing</p>
+    <a href="{% url 'designer_design_create' %}"
+       class="mt-5 inline-flex items-center gap-2 rounded-xl bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-600 transition-colors">
+        <i data-lucide="plus" class="h-4 w-4"></i>Yangi dizayn
+    </a>
+</div>
+{% endif %}
+
+<!-- Delete confirmation modal -->
+<div id="delete-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4" style="display:none !important">
+    <div class="absolute inset-0" style="background-color:rgba(0,0,0,0.45);backdrop-filter:blur(4px)"
+         onclick="closeDeleteModal()"></div>
+    <div id="delete-dialog"
+         class="relative w-full max-w-sm rounded-2xl border card shadow-2xl p-6"
+         style="transform:scale(0.95);opacity:0;transition:transform .18s ease,opacity .18s ease">
+        <div class="mb-4 flex justify-center">
+            <span class="grid h-14 w-14 place-items-center rounded-2xl icon-rose">
+                <i data-lucide="trash-2" class="h-7 w-7"></i>
+            </span>
+        </div>
+        <h2 class="text-center text-lg font-bold t-primary">O'chirishni tasdiqlang</h2>
+        <p class="mt-2 text-center text-sm t-secondary">
+            <strong id="delete-design-name" class="t-primary"></strong> dizayni o'chiriladi. Bu amalni qaytarib bo'lmaydi.
+        </p>
+        <div class="mt-6 flex gap-3">
+            <button onclick="closeDeleteModal()"
+                    class="flex-1 rounded-xl border px-4 py-2.5 text-sm font-medium t-secondary transition-colors hover:bg-zinc-50"
+                    style="border-color:#e4e4e7">
+                Bekor qilish
+            </button>
+            <form id="delete-form" method="post" class="flex-1">
+                {% csrf_token %}
+                <button type="submit"
+                        class="w-full rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-600 transition-colors">
+                    Ha, o'chirish
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openDeleteModal(designId, designName) {
+    var modal = document.getElementById('delete-modal');
+    var dialog = document.getElementById('delete-dialog');
+    var form = document.getElementById('delete-form');
+    var nameEl = document.getElementById('delete-design-name');
+    form.action = '/designer/designs/' + designId + '/delete/';
+    nameEl.textContent = designName;
+    modal.style.removeProperty('display');
+    requestAnimationFrame(function() {
+        dialog.style.transform = 'scale(1)';
+        dialog.style.opacity = '1';
+    });
+    document.body.style.overflow = 'hidden';
+}
+function closeDeleteModal() {
+    var modal = document.getElementById('delete-modal');
+    var dialog = document.getElementById('delete-dialog');
+    dialog.style.transform = 'scale(0.95)';
+    dialog.style.opacity = '0';
+    setTimeout(function() {
+        modal.style.setProperty('display', 'none', 'important');
+        document.body.style.overflow = '';
+    }, 180);
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDeleteModal();
+});
+</script>
+{% endblock %}

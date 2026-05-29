@@ -6,7 +6,7 @@ from django.db.models import FloatField
 from django.db.models.functions import Cast
 from decimal import Decimal, InvalidOperation
 from types import MethodType
-from .models import Color, StoneSize, ScotchRoll, Design, DesignColor
+from .models import Color, StoneSize, ScotchRoll, Design, DesignColor, MoldPrice
 
 
 DESIGN_LIST_PREVIEW_WIDTH = 100
@@ -15,7 +15,7 @@ DESIGN_FORM_PREVIEW_HEIGHT = 'auto'
 
 
 MODEL_ADMIN_ORDER = {
-    'designs': ['Design', 'Color', 'StoneSize', 'ScotchRoll'],
+    'designs': ['Design', 'MoldPrice', 'Color', 'StoneSize', 'ScotchRoll'],
     'accounts': ['UserProfile', 'User', 'Group'],
     'orders': ['Order', 'OrderStatus'],
     'finance': ['Payment', 'PaymentStatus', 'Expense', 'ExpenseType', 'Statistics'],
@@ -265,21 +265,47 @@ class ColorAdmin(admin.ModelAdmin):
 
 @admin.register(StoneSize)
 class StoneSizeAdmin(FormattedNumberAdminMixin, admin.ModelAdmin):
-    list_display = ['size', 'price_display', 'updated_at', 'created_at']
+    list_display = ['size', 'glass_stone_price_display', 'plastic_stone_price_display', 'updated_at', 'created_at']
 
     class Media:
         js = ('designs/js/number_format.js',)
 
-    def price_display(self, obj):
-        return format_number(obj.price, 2)
-    price_display.short_description = 'Price'
-    price_display.admin_order_field = 'price'
+    def glass_stone_price_display(self, obj):
+        return format_number(obj.glass_stone_price, 2)
+    glass_stone_price_display.short_description = 'Shisha tosh narxi'
+    glass_stone_price_display.admin_order_field = 'glass_stone_price'
+
+    def plastic_stone_price_display(self, obj):
+        return format_number(obj.plastic_stone_price, 2)
+    plastic_stone_price_display.short_description = 'Plastik tosh narxi'
+    plastic_stone_price_display.admin_order_field = 'plastic_stone_price'
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         return queryset.annotate(
             size_num=Cast('size', FloatField())
         ).order_by('size_num')
+
+
+@admin.register(MoldPrice)
+class MoldPriceAdmin(FormattedNumberAdminMixin, admin.ModelAdmin):
+    list_display = ['price_display', 'updated_at', 'created_at']
+
+    class Media:
+        js = ('designs/js/number_format.js',)
+
+    def price_display(self, obj):
+        return format_number(obj.price, 2)
+    price_display.short_description = 'Qolip tortish narxi'
+    price_display.admin_order_field = 'price'
+
+    def has_add_permission(self, request):
+        # Faqat bitta yozuv bo'lishi uchun — agar mavjud bo'lsa, yangi qo'shishni bloklash
+        return not MoldPrice.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        # O'chirishni taqiqlash — narx har doim mavjud bo'lishi kerak
+        return False
 
 
 @admin.register(ScotchRoll)

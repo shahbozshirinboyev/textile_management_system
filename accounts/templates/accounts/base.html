@@ -322,6 +322,15 @@
                            href="{% url 'employee_orders' %}">
                             <i data-lucide="clipboard-list" class="h-3.5 w-3.5"></i>Zakazlar
                         </a>
+                    {% elif user.profile.role == 'designer' %}
+                        <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium t-secondary hover:bg-zinc-100 transition-colors"
+                           href="{% url 'designer_dashboard' %}">
+                            <i data-lucide="layout-dashboard" class="h-3.5 w-3.5"></i>Dashboard
+                        </a>
+                        <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium t-secondary hover:bg-zinc-100 transition-colors"
+                           href="{% url 'designer_design_create' %}">
+                            <i data-lucide="plus-circle" class="h-3.5 w-3.5"></i>Yangi dizayn
+                        </a>
                     {% elif user.profile.role == 'buyer' %}
                         <a class="flex items-center gap-1.5 rounded-lg px-3 py-2 font-medium t-secondary hover:bg-zinc-100 transition-colors"
                            href="{% url 'buyer_dashboard' %}">

@@ -33,4 +33,10 @@ urlpatterns = [
     path('buyer/orders/new/<uuid:design_id>/', views.create_order, name='create_order_for_design'),
     path('buyer/payments/new/', views.create_payment, name='create_payment'),
     path('buyer/payments/new/<int:order_id>/', views.create_payment, name='create_payment_for_order'),
+
+    # ── Designer panel ───────────────────────────────────
+    path('designer/', views.designer_dashboard, name='designer_dashboard'),
+    path('designer/designs/new/', views.designer_design_create, name='designer_design_create'),
+    path('designer/designs/<uuid:design_id>/edit/', views.designer_design_edit, name='designer_design_edit'),
+    path('designer/designs/<uuid:design_id>/delete/', views.designer_design_delete, name='designer_design_delete'),
 ]

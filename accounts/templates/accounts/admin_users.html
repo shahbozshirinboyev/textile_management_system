@@ -1,4 +1,5 @@
 {% extends 'accounts/base.html' %}
+{% load num_filters %}
 {% block title %}Foydalanuvchilar — Admin panel{% endblock %}
 {% block content %}
 
@@ -10,15 +11,15 @@
     <div class="flex gap-3">
         <div class="rounded-2xl border card px-4 py-3 shadow-sm text-center">
             <p class="text-xs t-secondary">Xaridorlar</p>
-            <p class="mt-0.5 text-xl font-bold t-primary">{{ buyers }}</p>
+            <p class="mt-0.5 text-xl font-bold t-primary">{{ buyers|num }}</p>
         </div>
         <div class="rounded-2xl border card px-4 py-3 shadow-sm text-center">
             <p class="text-xs t-secondary">Ishchilar</p>
-            <p class="mt-0.5 text-xl font-bold t-primary">{{ employees }}</p>
+            <p class="mt-0.5 text-xl font-bold t-primary">{{ employees|num }}</p>
         </div>
         <div class="rounded-2xl border card px-4 py-3 shadow-sm text-center">
             <p class="text-xs t-secondary">Adminlar</p>
-            <p class="mt-0.5 text-xl font-bold t-primary">{{ admins }}</p>
+            <p class="mt-0.5 text-xl font-bold t-primary">{{ admins|num }}</p>
         </div>
     </div>
 </section>
@@ -82,6 +83,8 @@
                                 <span class="badge-indigo inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium">Admin</span>
                             {% elif u.profile.role == 'employee' %}
                                 <span class="badge-amber inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium">Ishchi</span>
+                            {% elif u.profile.role == 'designer' %}
+                                <span class="badge-blue inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium">Dizayner</span>
                             {% else %}
                                 <span class="badge-teal inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium">Xaridor</span>
                             {% endif %}
@@ -94,6 +97,7 @@
                                     <select name="role" class="field rounded-xl border px-3 py-2 text-sm">
                                         <option value="buyer" {% if not u.is_staff and u.profile.role == 'buyer' %}selected{% endif %}>Xaridor</option>
                                         <option value="employee" {% if not u.is_staff and u.profile.role == 'employee' %}selected{% endif %}>Ishchi</option>
+                                        <option value="designer" {% if not u.is_staff and u.profile.role == 'designer' %}selected{% endif %}>Dizayner</option>
                                     </select>
                                     <button type="submit"
                                             class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-teal-500 text-white hover:bg-teal-600 transition-colors shadow-sm"

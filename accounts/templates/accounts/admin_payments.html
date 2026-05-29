@@ -1,4 +1,5 @@
 {% extends 'accounts/base.html' %}
+{% load num_filters %}
 {% block title %}To'lovlar — Admin panel{% endblock %}
 {% block content %}
 
@@ -10,11 +11,11 @@
     <div class="flex gap-3">
         <div class="rounded-2xl border card px-5 py-3 shadow-sm text-center">
             <p class="text-xs t-secondary">Qabul qilingan</p>
-            <p class="mt-0.5 text-xl font-bold t-teal">{{ total_accepted|floatformat:0 }}</p>
+            <p class="mt-0.5 text-xl font-bold t-teal">{{ total_accepted|money }}</p>
         </div>
         <div class="rounded-2xl border card px-5 py-3 shadow-sm text-center">
             <p class="text-xs t-secondary">Kutilayotgan</p>
-            <p class="mt-0.5 text-xl font-bold" style="color:#d97706">{{ total_pending|floatformat:0 }}</p>
+            <p class="mt-0.5 text-xl font-bold" style="color:#d97706">{{ total_pending|money }}</p>
         </div>
     </div>
 </section>
@@ -60,7 +61,7 @@
                             <span class="font-mono text-xs t-muted">#{{ payment.order.id }}</span>
                             <p class="t-primary text-sm">{{ payment.order.design.name }}</p>
                         </td>
-                        <td class="px-5 py-4 font-semibold t-primary whitespace-nowrap">{{ payment.amount|floatformat:0 }} so'm</td>
+                        <td class="px-5 py-4 font-semibold t-primary whitespace-nowrap">{{ payment.amount|money }}</td>
                         <td class="px-5 py-4 whitespace-nowrap t-secondary">{{ payment.date }}</td>
                         <td class="px-5 py-4">
                             {% if payment.receipt_image %}

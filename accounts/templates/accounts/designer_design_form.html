@@ -1,0 +1,299 @@
+{% extends 'accounts/base.html' %}
+{% load num_filters %}
+{% block title %}{% if action == 'edit' %}Dizaynni tahrirlash{% else %}Yangi dizayn{% endif %} — Textile MS{% endblock %}
+{% block content %}
+
+<!-- Header -->
+<section class="mb-8">
+    <div class="flex items-center gap-3 mb-2">
+        <a href="{% url 'designer_dashboard' %}"
+           class="grid h-9 w-9 place-items-center rounded-xl border tab-inactive transition-colors hover:bg-zinc-50">
+            <i data-lucide="arrow-left" class="h-4 w-4"></i>
+        </a>
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-widest t-teal">Designer panel</p>
+            <h1 class="text-2xl font-bold tracking-tight t-primary">
+                {% if action == 'edit' %}Dizaynni tahrirlash{% else %}Yangi dizayn qo'shish{% endif %}
+            </h1>
+        </div>
+    </div>
+</section>
+
+<form method="post" enctype="multipart/form-data" id="design-form">
+    {% csrf_token %}
+    <div class="grid gap-6 lg:grid-cols-3">
+
+        <!-- Left: main fields -->
+        <div class="lg:col-span-2 space-y-5">
+
+            <!-- Basic info card -->
+            <div class="rounded-2xl border card shadow-sm p-6">
+                <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider t-secondary">Asosiy ma'lumotlar</h2>
+
+                <div class="space-y-4">
+                    <!-- Name -->
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium t-primary">Dizayn nomi <span class="text-rose-500">*</span></label>
+                        <input type="text" name="name" required
+                               value="{{ design.name|default:'' }}"
+                               placeholder="Masalan: Gul naqsh 01"
+                               class="field w-full rounded-xl border px-4 py-2.5 text-sm">
+                    </div>
+
+                    <!-- Color count (auto) -->
+                    <div class="rounded-xl border px-4 py-3 stat-mini flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium t-secondary">Ranglar soni</p>
+                            <p class="text-xs t-muted mt-0.5">Qo'shilgan ranglar asosida avtomatik hisoblanadi</p>
+                        </div>
+                        <span id="color-count-display" class="text-2xl font-bold t-teal">
+                            {% if action == 'edit' %}{{ design.color_count }}{% else %}0{% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Scotch -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium t-primary">Skotch turi</label>
+                            <select name="scotch" class="field w-full rounded-xl border px-4 py-2.5 text-sm">
+                                <option value="">— Tanlanmagan —</option>
+                                {% for roll in scotch_rolls %}
+                                    <option value="{{ roll.id }}"
+                                        {% if design.scotch and design.scotch.id == roll.id %}selected{% endif %}>
+                                        {{ roll.width }} sm — {{ roll.price_per_meter|num }} so'm/m
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium t-primary">Skotch uzunligi (sm)</label>
+                            <input type="number" name="scotch_length" min="0" step="0.01"
+                                   value="{{ design.scotch_length|default:'' }}"
+                                   placeholder="0.00"
+                                   class="field w-full rounded-xl border px-4 py-2.5 text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Is printable -->
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" name="is_printable" id="is_printable"
+                               {% if design.is_printable %}checked{% endif %}
+                               class="h-4 w-4 rounded border-zinc-300 text-teal-500 focus:ring-teal-500">
+                        <label for="is_printable" class="text-sm font-medium t-primary">Chop etish</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colors / stones card -->
+            <div class="rounded-2xl border card shadow-sm p-6">
+                <div class="mb-4 flex items-center justify-between">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider t-secondary">Ranglar va toshlar</h2>
+                    <button type="button" id="add-color-row"
+                            class="inline-flex items-center gap-1.5 rounded-xl bg-teal-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-600 transition-colors">
+                        <i data-lucide="plus" class="h-3.5 w-3.5"></i>Rang qo'shish
+                    </button>
+                </div>
+
+                <div id="color-rows" class="space-y-3">
+                    {% if action == 'edit' and existing_colors %}
+                        {% for dc in existing_colors %}
+                        <div class="color-row flex flex-wrap items-center gap-3 rounded-xl p-3">
+                            <div class="flex-1 min-w-[160px]">
+                                <label class="mb-1 block text-xs t-muted">Rang</label>
+                                <select name="color_id" class="field w-full rounded-lg border px-3 py-2 text-sm">
+                                    <option value="">— Tanlang —</option>
+                                    {% for color in colors %}
+                                        <option value="{{ color.id }}" {% if dc.color.id == color.id %}selected{% endif %}>
+                                            {{ color.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="w-28">
+                                <label class="mb-1 block text-xs t-muted">Tosh soni</label>
+                                <input type="number" name="stone_count" min="0"
+                                       value="{{ dc.stone_count }}"
+                                       class="field w-full rounded-lg border px-3 py-2 text-sm">
+                            </div>
+                            <div class="flex items-end pb-0.5">
+                                <button type="button" onclick="removeColorRow(this)"
+                                        class="grid h-8 w-8 place-items-center rounded-lg border border-rose-200 text-rose-400 hover:bg-rose-50 transition-colors">
+                                    <i data-lucide="x" class="h-3.5 w-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <p id="no-colors-hint" class="mt-3 text-center text-xs t-muted
+                    {% if action == 'edit' and existing_colors %}hidden{% endif %}">
+                    Hali rang qo'shilmagan. "Rang qo'shish" tugmasini bosing.
+                </p>
+            </div>
+        </div>
+
+        <!-- Right: image -->
+        <div class="space-y-5">
+            <div class="rounded-2xl border card shadow-sm p-6">
+                <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider t-secondary">Rasm</h2>
+
+                <!-- Preview -->
+                <div class="mb-4 aspect-video overflow-hidden rounded-xl img-placeholder flex items-center justify-center">
+                    {% if design.image %}
+                        <img id="img-preview" src="{{ design.image.url }}" alt="preview"
+                             class="h-full w-full object-cover">
+                    {% else %}
+                        <img id="img-preview" src="" alt="preview"
+                             class="h-full w-full object-cover hidden">
+                        <span id="img-placeholder-icon">
+                            <i data-lucide="image" class="h-10 w-10 t-muted opacity-40"></i>
+                        </span>
+                    {% endif %}
+                </div>
+
+                <label class="block">
+                    <span class="sr-only">Rasm tanlash</span>
+                    <input type="file" name="image" accept="image/*" id="image-input"
+                           class="block w-full text-sm t-secondary
+                                  file:mr-3 file:rounded-xl file:border-0
+                                  file:bg-teal-500 file:px-4 file:py-2
+                                  file:text-xs file:font-semibold file:text-white
+                                  hover:file:bg-teal-600 cursor-pointer">
+                </label>
+                {% if action == 'edit' and design.image %}
+                    <p class="mt-2 text-xs t-muted">Yangi rasm tanlanmasa, mavjud rasm saqlanadi.</p>
+                {% endif %}
+            </div>
+
+            <!-- Cost preview card -->
+            <div class="rounded-2xl border card shadow-sm p-6">
+                <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider t-secondary">Narx hisob-kitobi</h2>
+                {% if action == 'edit' %}
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="t-secondary">Qolip narxi (p1)</span>
+                        <span class="font-medium t-primary">{{ design.total_mold_cost|money }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="t-secondary">Tosh narxi (p2)</span>
+                        <span class="font-medium t-primary">{{ design.total_stone_cost|money }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="t-secondary">Skotch narxi (p3)</span>
+                        <span class="font-medium t-primary">{{ design.total_scotch_cost|money }}</span>
+                    </div>
+                    <div class="border-t card-divider pt-2 flex justify-between font-semibold">
+                        <span class="t-primary">Jami qolip narxi</span>
+                        <span class="t-teal">{{ design.qolip_narxi|money }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-xs t-muted">Dizayn saqlangandan keyin narx hisoblanadi.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="mt-6 flex items-center justify-end gap-3">
+        <a href="{% url 'designer_dashboard' %}"
+           class="rounded-xl border px-5 py-2.5 text-sm font-medium t-secondary transition-colors tab-inactive">
+            Bekor qilish
+        </a>
+        <button type="submit"
+                class="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-teal-600 transition-colors">
+            <i data-lucide="save" class="h-4 w-4"></i>
+            {% if action == 'edit' %}Saqlash{% else %}Qo'shish{% endif %}
+        </button>
+    </div>
+</form>
+
+<!-- Color row template (hidden) -->
+<template id="color-row-template">
+    <div class="color-row flex flex-wrap items-center gap-3 rounded-xl p-3">
+        <div class="flex-1 min-w-[160px]">
+            <label class="mb-1 block text-xs t-muted">Rang</label>
+            <select name="color_id" class="field w-full rounded-lg border px-3 py-2 text-sm">
+                <option value="">— Tanlang —</option>
+                {% for color in colors %}
+                    <option value="{{ color.id }}">{{ color.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="w-28">
+            <label class="mb-1 block text-xs t-muted">Tosh soni</label>
+            <input type="number" name="stone_count" min="0" value="0"
+                   class="field w-full rounded-lg border px-3 py-2 text-sm">
+        </div>
+        <div class="flex items-end pb-0.5">
+            <button type="button" onclick="removeColorRow(this)"
+                    class="grid h-8 w-8 place-items-center rounded-lg border border-rose-200 text-rose-400 hover:bg-rose-50 transition-colors">
+                <i data-lucide="x" class="h-3.5 w-3.5"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Image preview
+document.getElementById('image-input')?.addEventListener('change', function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        var img = document.getElementById('img-preview');
+        var placeholder = document.getElementById('img-placeholder-icon');
+        img.src = ev.target.result;
+        img.classList.remove('hidden');
+        if (placeholder) placeholder.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+});
+
+// Add color row
+document.getElementById('add-color-row')?.addEventListener('click', function() {
+    var template = document.getElementById('color-row-template');
+    var clone = template.content.cloneNode(true);
+    document.getElementById('color-rows').appendChild(clone);
+    document.getElementById('no-colors-hint')?.classList.add('hidden');
+    lucide.createIcons();
+    updateColorIndexes();
+    updateColorCount();
+});
+
+// Remove color row
+function removeColorRow(btn) {
+    btn.closest('.color-row').remove();
+    updateColorIndexes();
+    updateColorCount();
+    var rows = document.querySelectorAll('#color-rows .color-row');
+    if (rows.length === 0) {
+        document.getElementById('no-colors-hint')?.classList.remove('hidden');
+    }
+}
+
+// Update use_plastic_stone checkbox values to match row index
+function updateColorIndexes() {
+    var rows = document.querySelectorAll('#color-rows .color-row');
+    rows.forEach(function(row, i) {
+        var cb = row.querySelector('input[name="use_plastic_stone"]');
+        if (cb) cb.value = String(i);
+    });
+}
+
+// Update the visible color count badge
+function updateColorCount() {
+    var count = document.querySelectorAll('#color-rows .color-row').length;
+    var el = document.getElementById('color-count-display');
+    if (el) el.textContent = count;
+}
+
+// Init
+updateColorIndexes();
+updateColorCount();
+</script>
+{% endblock %}

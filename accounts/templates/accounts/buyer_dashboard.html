@@ -1,4 +1,5 @@
 {% extends 'accounts/base.html' %}
+{% load num_filters %}
 {% block title %}Buyer kabinet — Textile MS{% endblock %}
 {% block content %}
 
@@ -33,7 +34,7 @@
             </span>
         </div>
         <p class="mt-3 text-2xl font-bold {% if balance >= 0 %}t-teal{% else %}t-rose{% endif %}">
-            {{ balance|floatformat:0 }} so'm
+            {{ balance|money }}
         </p>
         <p class="mt-1 text-xs t-muted">To'lov − zakaz summasi</p>
     </div>
@@ -45,7 +46,7 @@
                 <i data-lucide="package" class="h-4 w-4"></i>
             </span>
         </div>
-        <p class="mt-3 text-2xl font-bold t-primary">{{ orders_count }}</p>
+        <p class="mt-3 text-2xl font-bold t-primary">{{ orders_count|num }}</p>
         <p class="mt-1 text-xs t-muted">Jami buyurtmalar</p>
     </div>
 
@@ -56,7 +57,7 @@
                 <i data-lucide="circle-check" class="h-4 w-4"></i>
             </span>
         </div>
-        <p class="mt-3 text-2xl font-bold t-primary">{{ accepted_payments|floatformat:0 }}</p>
+        <p class="mt-3 text-2xl font-bold t-primary">{{ accepted_payments|money }}</p>
         <p class="mt-1 text-xs t-muted">Tasdiqlangan to'lovlar</p>
     </div>
 
@@ -67,7 +68,7 @@
                 <i data-lucide="receipt" class="h-4 w-4"></i>
             </span>
         </div>
-        <p class="mt-3 text-2xl font-bold t-primary">{{ orders_total|floatformat:0 }}</p>
+        <p class="mt-3 text-2xl font-bold t-primary">{{ orders_total|money }}</p>
         <p class="mt-1 text-xs t-muted">Jami zakaz narxi</p>
     </div>
 </section>
@@ -93,7 +94,7 @@
                         <div class="mt-1 flex flex-wrap items-center gap-2 text-xs t-secondary">
                             <span>{{ order.date }}</span>
                             <span>·</span>
-                            <span>{{ order.quantity }} dona</span>
+                            <span>{{ order.quantity|num }} dona</span>
                             <span>·</span>
                             <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
                                 {% if order.status.code == 'sent' %}badge-amber
@@ -136,7 +137,7 @@
             {% for payment in recent_payments %}
                 <div class="card-divider border-b px-6 py-4 last:border-0">
                     <div class="flex items-center justify-between">
-                        <p class="font-semibold t-primary">{{ payment.amount|floatformat:0 }} so'm</p>
+                        <p class="font-semibold t-primary">{{ payment.amount|money }}</p>
                         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
                             {% if payment.status.code == 'accepted' %}badge-emerald
                             {% elif payment.status.code == 'sent' %}badge-amber

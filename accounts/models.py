@@ -7,6 +7,7 @@ class UserProfile(models.Model):
         ADMIN = 'admin', 'Admin'
         BUYER = 'buyer', 'Buyer'
         EMPLOYEE = 'employee', 'Employee'
+        DESIGNER = 'designer', 'Designer'
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,

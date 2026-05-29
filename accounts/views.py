@@ -11,7 +11,7 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from designs.models import Design
+from designs.models import Color, Design, DesignColor, ScotchRoll, StoneSize
 from finance.models import Expense, Payment, PaymentStatus, Statistics
 from orders.models import Order, OrderStatus
 
@@ -38,6 +38,8 @@ def role_redirect(user):
         return reverse_lazy('admin_dashboard')
     if role == UserProfile.Role.EMPLOYEE:
         return reverse_lazy('employee_orders')
+    if role == UserProfile.Role.DESIGNER:
+        return reverse_lazy('designer_dashboard')
     return reverse_lazy('buyer_dashboard')
 
 
@@ -78,6 +80,18 @@ def _buyer_required(view_func):
     return wrapper
 
 
+def _designer_required(view_func):
+    from functools import wraps
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect(f"{reverse_lazy('login')}?next={request.path}")
+        if get_role(request.user) != UserProfile.Role.DESIGNER:
+            return redirect(role_redirect(request.user))
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
 # ─────────────────────────────────────────────
 #  Auth views
 # ─────────────────────────────────────────────
@@ -96,8 +110,7 @@ class SiteLoginView(LoginView):
 
 
 def public_home(request):
-    # Always show the public catalog — authenticated users see it too
-    designs = Design.objects.prefetch_related('colors__color', 'colors__stone_size')
+    designs = Design.objects.prefetch_related('colors__color')
     return render(request, 'accounts/public_home.html', {'designs': designs})
 
 
@@ -310,7 +323,7 @@ def admin_users(request):
 def admin_update_user_role(request, user_id):
     target = get_object_or_404(User, id=user_id)
     new_role = request.POST.get('role')
-    if new_role in ('buyer', 'employee'):
+    if new_role in ('buyer', 'employee', 'designer'):
         target.profile.role = new_role
         target.profile.save(update_fields=['role', 'updated_at'])
         target.is_staff = False
@@ -394,30 +407,42 @@ def buyer_dashboard(request):
 
 @_buyer_required
 def design_catalog(request):
-    designs = Design.objects.prefetch_related('colors__color', 'colors__stone_size')
+    designs = Design.objects.prefetch_related('colors__color')
     return render(request, 'accounts/design_catalog.html', {'designs': designs})
 
 
 def design_detail(request, design_id):
     design = get_object_or_404(
-        Design.objects.prefetch_related('colors__color', 'colors__stone_size'),
+        Design.objects.prefetch_related('colors__color'),
         id=design_id,
     )
     return render(request, 'accounts/design_detail.html', {
         'design': design,
         'is_authenticated': request.user.is_authenticated,
+        'price_glass':   design.qolip_narxi('glass'),
+        'price_plastic': design.qolip_narxi('plastic'),
     })
 
 
 @_buyer_required
 def create_order(request, design_id=None):
-    designs = Design.objects.all()
+    # Annotate each design with both price variants for the template
+    all_designs = Design.objects.prefetch_related('colors__color')
+    designs_with_prices = []
+    for d in all_designs:
+        d.qolip_narxi_glass    = d.qolip_narxi('glass')
+        d.qolip_narxi_plastic  = d.qolip_narxi('plastic')
+        designs_with_prices.append(d)
+
     selected_design = None
     if design_id:
         selected_design = get_object_or_404(Design, id=design_id)
 
     if request.method == 'POST':
         design = get_object_or_404(Design, id=request.POST.get('design'))
+        stone_type = request.POST.get('stone_type', 'glass')
+        if stone_type not in ('glass', 'plastic'):
+            stone_type = 'glass'
         status, _ = OrderStatus.objects.get_or_create(code='sent', defaults={'name': 'Sent'})
         quantity = max(1, int(request.POST.get('quantity') or 1))
         Order.objects.create(
@@ -425,6 +450,7 @@ def create_order(request, design_id=None):
             buyer=request.user,
             date=timezone.localdate(),
             quantity=quantity,
+            stone_type=stone_type,
             note=request.POST.get('note', '').strip(),
             status=status,
         )
@@ -432,7 +458,7 @@ def create_order(request, design_id=None):
         return redirect('buyer_dashboard')
 
     return render(request, 'accounts/order_form.html', {
-        'designs': designs,
+        'designs': designs_with_prices,
         'selected_design': selected_design,
     })
 
@@ -461,3 +487,142 @@ def create_payment(request, order_id=None):
         'orders': orders,
         'selected_order': selected_order,
     })
+
+
+# ─────────────────────────────────────────────
+#  DESIGNER panel
+# ─────────────────────────────────────────────
+
+@_designer_required
+def designer_dashboard(request):
+    designs = Design.objects.prefetch_related('colors__color').order_by('-created_at')
+    total_designs = designs.count()
+    total_colors = sum(d.colors.count() for d in designs)
+    context = {
+        'designs': designs,
+        'total_designs': total_designs,
+        'total_colors': total_colors,
+    }
+    return render(request, 'accounts/designer_dashboard.html', context)
+
+
+@_designer_required
+def designer_design_create(request):
+    colors = Color.objects.all().order_by('name')
+    scotch_rolls = ScotchRoll.objects.all().order_by('width')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        scotch_id = request.POST.get('scotch') or None
+        scotch_length = request.POST.get('scotch_length') or None
+        is_printable = bool(request.POST.get('is_printable'))
+        image = request.FILES.get('image')
+
+        if not name:
+            messages.error(request, 'Dizayn nomi kiritilishi shart.')
+            return redirect('designer_design_create')
+
+        scotch = None
+        if scotch_id:
+            try:
+                scotch = ScotchRoll.objects.get(id=scotch_id)
+            except ScotchRoll.DoesNotExist:
+                pass
+
+        design = Design.objects.create(
+            name=name,
+            scotch=scotch,
+            scotch_length=scotch_length if scotch_length else None,
+            is_printable=is_printable,
+            image=image,
+        )
+
+        # Save DesignColor rows
+        color_ids = request.POST.getlist('color_id')
+        stone_counts = request.POST.getlist('stone_count')
+
+        for i, color_id in enumerate(color_ids):
+            if not color_id:
+                continue
+            try:
+                color = Color.objects.get(id=color_id)
+                DesignColor.objects.create(
+                    design=design,
+                    color=color,
+                    stone_count=int(stone_counts[i]) if i < len(stone_counts) and stone_counts[i] else 0,
+                )
+            except (Color.DoesNotExist, ValueError):
+                continue
+
+        messages.success(request, f'"{design.name}" dizayni muvaffaqiyatli qo\'shildi.')
+        return redirect('designer_dashboard')
+
+    return render(request, 'accounts/designer_design_form.html', {
+        'colors': colors,
+        'scotch_rolls': scotch_rolls,
+        'action': 'create',
+    })
+
+
+@_designer_required
+def designer_design_edit(request, design_id):
+    design = get_object_or_404(Design, id=design_id)
+    colors = Color.objects.all().order_by('name')
+    scotch_rolls = ScotchRoll.objects.all().order_by('width')
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        scotch_id = request.POST.get('scotch') or None
+        scotch_length = request.POST.get('scotch_length') or None
+        is_printable = bool(request.POST.get('is_printable'))
+
+        if not name:
+            messages.error(request, 'Dizayn nomi kiritilishi shart.')
+            return redirect('designer_design_edit', design_id=design_id)
+
+        design.name = name
+        design.scotch = ScotchRoll.objects.filter(id=scotch_id).first() if scotch_id else None
+        design.scotch_length = scotch_length if scotch_length else None
+        design.is_printable = is_printable
+        if request.FILES.get('image'):
+            design.image = request.FILES['image']
+        design.save()
+
+        # Rebuild DesignColor rows
+        design.colors.all().delete()
+        color_ids = request.POST.getlist('color_id')
+        stone_counts = request.POST.getlist('stone_count')
+
+        for i, color_id in enumerate(color_ids):
+            if not color_id:
+                continue
+            try:
+                color = Color.objects.get(id=color_id)
+                DesignColor.objects.create(
+                    design=design,
+                    color=color,
+                    stone_count=int(stone_counts[i]) if i < len(stone_counts) and stone_counts[i] else 0,
+                )
+            except (Color.DoesNotExist, ValueError):
+                continue
+
+        messages.success(request, f'"{design.name}" dizayni yangilandi.')
+        return redirect('designer_dashboard')
+
+    return render(request, 'accounts/designer_design_form.html', {
+        'design': design,
+        'colors': colors,
+        'scotch_rolls': scotch_rolls,
+        'action': 'edit',
+        'existing_colors': design.colors.select_related('color').all(),
+    })
+
+
+@_designer_required
+def designer_design_delete(request, design_id):
+    design = get_object_or_404(Design, id=design_id)
+    if request.method == 'POST':
+        name = design.name
+        design.delete()
+        messages.success(request, f'"{name}" dizayni o\'chirildi.')
+    return redirect('designer_dashboard')

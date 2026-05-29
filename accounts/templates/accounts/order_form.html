@@ -12,26 +12,67 @@
     <div class="mb-6">
         <p class="text-xs font-semibold uppercase tracking-widest t-teal">Zakaz</p>
         <h1 class="mt-2 text-3xl font-bold tracking-tight t-primary">Yangi zakaz berish</h1>
-        <p class="mt-1 text-sm t-secondary">Dizayn tanlang va miqdorni kiriting</p>
+        <p class="mt-1 text-sm t-secondary">Dizayn tanlang, tosh turini belgilang va miqdorni kiriting</p>
     </div>
 
-    <form method="post" class="rounded-2xl border card p-6 shadow-sm space-y-5">
+    <form method="post" class="space-y-5">
         {% csrf_token %}
 
-        <div>
-            <label class="block text-sm font-medium t-secondary mb-1.5" for="design">
+        <!-- Design select -->
+        <div class="rounded-2xl border card p-5 shadow-sm">
+            <label class="block text-sm font-medium t-primary mb-1.5" for="design">
                 Dizayn <span class="text-rose-500">*</span>
             </label>
-            <select id="design" name="design" required class="field w-full rounded-xl border px-4 py-3 text-sm">
+            <select id="design" name="design" required
+                    class="field w-full rounded-xl border px-4 py-3 text-sm">
                 <option value="">— Tanlang —</option>
                 {% for d in designs %}
-                    <option value="{{ d.id }}" {% if selected_design.id == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    <option value="{{ d.id }}"
+                            data-price-glass="{{ d.qolip_narxi_glass }}"
+                            data-price-plastic="{{ d.qolip_narxi_plastic }}"
+                            {% if selected_design.id == d.id %}selected{% endif %}>
+                        {{ d.name }}
+                    </option>
                 {% endfor %}
             </select>
         </div>
 
-        <div>
-            <label class="block text-sm font-medium t-secondary mb-1.5" for="quantity">
+        <!-- Stone type selection -->
+        <div class="rounded-2xl border card p-5 shadow-sm">
+            <p class="text-sm font-medium t-primary mb-3">Tosh turi <span class="text-rose-500">*</span></p>
+            <div class="grid grid-cols-2 gap-3">
+
+                <label id="label-glass"
+                       class="stone-option cursor-pointer rounded-xl border-2 p-4 transition-all selected-stone"
+                       style="border-color:#14b8a6; background-color:rgba(20,184,166,0.06)">
+                    <input type="radio" name="stone_type" value="glass" checked class="sr-only">
+                    <div class="flex flex-col items-center gap-2 text-center">
+                        <span class="icon-indigo grid h-10 w-10 place-items-center rounded-xl">
+                            <i data-lucide="gem" class="h-5 w-5"></i>
+                        </span>
+                        <p class="text-sm font-semibold t-primary">Shisha tosh</p>
+                        <p id="price-glass" class="text-xs t-teal font-medium">— so'm</p>
+                    </div>
+                </label>
+
+                <label id="label-plastic"
+                       class="stone-option cursor-pointer rounded-xl border-2 p-4 transition-all tab-inactive"
+                       style="border-color:#e4e4e7">
+                    <input type="radio" name="stone_type" value="plastic" class="sr-only">
+                    <div class="flex flex-col items-center gap-2 text-center">
+                        <span class="icon-amber grid h-10 w-10 place-items-center rounded-xl">
+                            <i data-lucide="circle-dot" class="h-5 w-5"></i>
+                        </span>
+                        <p class="text-sm font-semibold t-primary">Plastik tosh</p>
+                        <p id="price-plastic" class="text-xs font-medium" style="color:#d97706">— so'm</p>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Quantity -->
+        <div class="rounded-2xl border card p-5 shadow-sm">
+            <label class="block text-sm font-medium t-primary mb-1.5" for="quantity">
                 Miqdor (dona) <span class="text-rose-500">*</span>
             </label>
             <div class="flex items-center gap-3">
@@ -48,22 +89,24 @@
             </div>
         </div>
 
-        <div>
-            <label class="block text-sm font-medium t-secondary mb-1.5" for="note">
+        <!-- Note -->
+        <div class="rounded-2xl border card p-5 shadow-sm">
+            <label class="block text-sm font-medium t-primary mb-1.5" for="note">
                 Izoh <span class="t-muted font-normal">(ixtiyoriy)</span>
             </label>
-            <textarea id="note" name="note" rows="4"
+            <textarea id="note" name="note" rows="3"
                       class="field w-full rounded-xl border px-4 py-3 text-sm resize-none"
                       placeholder="O'lcham, muddat yoki qo'shimcha talablar..."></textarea>
         </div>
 
-        <div class="flex items-center gap-3 pt-2">
+        <!-- Submit -->
+        <div class="flex items-center gap-3">
             <button type="submit"
                     class="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-6 py-3 text-sm font-semibold text-white shadow-md hover:bg-teal-600 transition-colors">
                 <i data-lucide="send" class="h-4 w-4"></i>Yuborish
             </button>
             <a href="{% url 'buyer_dashboard' %}"
-               class="inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium t-secondary hover:bg-zinc-50 transition-colors" style="border-color:#e4e4e7">
+               class="inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-sm font-medium t-secondary hover:bg-zinc-50 transition-colors tab-inactive">
                 Bekor qilish
             </a>
         </div>
@@ -73,14 +116,71 @@
 
 {% block extra_js %}
 <script>
-    var qtyInput = document.getElementById('quantity');
-    document.getElementById('qty-minus').addEventListener('click', function(){
-        var v = parseInt(qtyInput.value) || 1;
-        if(v > 1) qtyInput.value = v - 1;
+// ── Qty buttons ──────────────────────────────────────────
+var qtyInput = document.getElementById('quantity');
+document.getElementById('qty-minus').addEventListener('click', function(){
+    var v = parseInt(qtyInput.value) || 1;
+    if(v > 1) qtyInput.value = v - 1;
+});
+document.getElementById('qty-plus').addEventListener('click', function(){
+    var v = parseInt(qtyInput.value) || 1;
+    qtyInput.value = v + 1;
+});
+
+// ── Stone type toggle ────────────────────────────────────
+var labelGlass   = document.getElementById('label-glass');
+var labelPlastic = document.getElementById('label-plastic');
+var radios = document.querySelectorAll('input[name="stone_type"]');
+
+function applyStoneSelection(val) {
+    var isDark = document.documentElement.classList.contains('dark');
+    if (val === 'glass') {
+        labelGlass.style.borderColor = '#14b8a6';
+        labelGlass.style.backgroundColor = 'rgba(20,184,166,0.06)';
+        labelPlastic.style.borderColor = isDark ? 'rgba(255,255,255,0.10)' : '#e4e4e7';
+        labelPlastic.style.backgroundColor = '';
+    } else {
+        labelPlastic.style.borderColor = '#f59e0b';
+        labelPlastic.style.backgroundColor = 'rgba(245,158,11,0.06)';
+        labelGlass.style.borderColor = isDark ? 'rgba(255,255,255,0.10)' : '#e4e4e7';
+        labelGlass.style.backgroundColor = '';
+    }
+}
+
+radios.forEach(function(r) {
+    r.addEventListener('change', function() {
+        applyStoneSelection(this.value);
     });
-    document.getElementById('qty-plus').addEventListener('click', function(){
-        var v = parseInt(qtyInput.value) || 1;
-        qtyInput.value = v + 1;
+});
+
+// Click on label toggles radio
+[labelGlass, labelPlastic].forEach(function(lbl) {
+    lbl.addEventListener('click', function() {
+        var radio = this.querySelector('input[type="radio"]');
+        radio.checked = true;
+        applyStoneSelection(radio.value);
     });
+});
+
+// ── Design price preview ─────────────────────────────────
+var designSelect = document.getElementById('design');
+var priceGlassEl   = document.getElementById('price-glass');
+var pricePlasticEl = document.getElementById('price-plastic');
+
+function formatNum(n) {
+    if (!n || isNaN(n)) return '— so\'m';
+    return parseInt(n).toLocaleString('uz-UZ') + ' so\'m';
+}
+
+function updatePrices() {
+    var opt = designSelect.options[designSelect.selectedIndex];
+    var pg = opt ? opt.getAttribute('data-price-glass')   : null;
+    var pp = opt ? opt.getAttribute('data-price-plastic') : null;
+    priceGlassEl.textContent   = formatNum(pg);
+    pricePlasticEl.textContent = formatNum(pp);
+}
+
+designSelect.addEventListener('change', updatePrices);
+updatePrices(); // init on page load
 </script>
 {% endblock %}
